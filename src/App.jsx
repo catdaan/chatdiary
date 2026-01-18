@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
 import TimelinePage from './pages/TimelinePage';
 import DiaryEntryPage from './pages/DiaryEntryPage';
@@ -29,7 +29,7 @@ function App() {
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
             </Routes>
-          </BrowserRouter>
+          </HashRouter>
         </AIProvider>
       </UserProvider>
     </DiaryProvider>
