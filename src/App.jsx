@@ -16,7 +16,7 @@ function App() {
     <DiaryProvider>
       <UserProvider>
         <AIProvider>
-          <BrowserRouter>
+          <HashRouter>
             <Routes>
               <Route path="/" element={<AppLayout />}>
                 <Route index element={<Navigate to="/write" replace />} />
