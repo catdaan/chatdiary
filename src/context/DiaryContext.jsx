@@ -48,6 +48,45 @@ export function DiaryProvider({ children }) {
     }
   });
 
+  // Default Categories Data
+  const DEFAULT_CATEGORIES_DATA = [
+    { id: 'Daily Life', name: 'Daily Life', iconName: 'Coffee', color: 'bg-orange-100 text-orange-600' },
+    { id: 'Work', name: 'Work', iconName: 'Briefcase', color: 'bg-blue-100 text-blue-600' },
+    { id: 'Travel', name: 'Travel', iconName: 'Plane', color: 'bg-green-100 text-green-600' },
+  ];
+
+  // Custom Categories State (Now stores objects { id, name, color, coverImage, iconName })
+  const [customCategories, setCustomCategories] = useState(() => {
+    try {
+      const saved = localStorage.getItem('chatdairy-categories');
+      const initialized = localStorage.getItem('chatdairy-categories-initialized');
+      
+      let parsed = saved ? JSON.parse(saved) : [];
+      
+      if (!initialized) {
+          // Migration 1: if stored as array of strings, convert to objects
+          if (parsed.length > 0 && typeof parsed[0] === 'string') {
+              parsed = parsed.map(name => ({ id: name, name, color: 'bg-indigo-100 text-indigo-600', iconName: 'Layers' }));
+          }
+    
+          // Migration 2: Ensure defaults exist (Migration from hardcoded defaults to persisted state)
+          // Only do this if we haven't initialized before
+          const hasDefaults = parsed.some(c => c.name === 'Daily Life');
+          if (!hasDefaults) {
+              // Merge defaults at the beginning
+              parsed = [...DEFAULT_CATEGORIES_DATA, ...parsed];
+          }
+          
+          // Mark as initialized
+          localStorage.setItem('chatdairy-categories-initialized', 'true');
+      }
+      
+      return parsed;
+    } catch (e) {
+      return DEFAULT_CATEGORIES_DATA;
+    }
+  });
+
   useEffect(() => {
     try {
       localStorage.setItem('chatdairy-entries', JSON.stringify(diaries));
@@ -58,6 +97,69 @@ export function DiaryProvider({ children }) {
       }
     }
   }, [diaries]);
+
+  useEffect(() => {
+    localStorage.setItem('chatdairy-categories', JSON.stringify(customCategories));
+  }, [customCategories]);
+
+  const addCategory = (categoryData) => {
+    // Handle both old signature (name, color) and new object signature
+    let name, color, coverImage, iconName;
+    if (typeof categoryData === 'string') {
+        name = categoryData;
+        color = arguments[1] || 'bg-indigo-100 text-indigo-600';
+        coverImage = null;
+        iconName = 'Layers';
+    } else {
+        ({ name, color = 'bg-indigo-100 text-indigo-600', coverImage = null, iconName = 'Layers' } = categoryData);
+    }
+
+    setCustomCategories(prev => {
+      if (prev.some(c => c.name === name)) return prev;
+      return [...prev, { id: name, name, color, coverImage, iconName }];
+    });
+  };
+
+  const updateCategory = (originalName, updates) => {
+    // updates can be { name, color, coverImage }
+    // or old signature: newName, newColor
+    let newName, newColor, newCoverImage;
+    
+    if (typeof updates === 'string') {
+        newName = updates;
+        newColor = arguments[2];
+        newCoverImage = undefined;
+    } else {
+        ({ name: newName, color: newColor, coverImage: newCoverImage } = updates);
+    }
+
+    setCustomCategories(prev => prev.map(c => {
+        if (c.name === originalName) {
+            return { 
+                ...c, 
+                name: newName || c.name, 
+                id: newName || c.id, 
+                color: newColor || c.color,
+                coverImage: newCoverImage !== undefined ? newCoverImage : c.coverImage
+            };
+        }
+        return c;
+    }));
+    
+    // Also update diaries that used this category
+    if (newName && originalName !== newName) {
+        setDiaries(prev => prev.map(d => {
+            if (d.category === originalName) {
+                return { ...d, category: newName };
+            }
+            return d;
+        }));
+    }
+  };
+
+  const deleteCategory = (name) => {
+    setCustomCategories(prev => prev.filter(c => c.name !== name));
+  };
 
   const getDiaryByDate = (dateString) => {
     return diaries.find(d => d.date === dateString);
@@ -126,7 +228,22 @@ export function DiaryProvider({ children }) {
   };
 
   return (
-    <DiaryContext.Provider value={{ diaries, getDiaryByDate, getDiariesByDate, getDiaryById, addDiary, updateDiary, deleteDiary, deleteChatHistory, addComment, deleteComment }}>
+    <DiaryContext.Provider value={{ 
+      diaries, 
+      getDiaryByDate, 
+      getDiariesByDate, 
+      getDiaryById, 
+      addDiary, 
+      updateDiary, 
+      deleteDiary,
+      deleteChatHistory,
+      addComment,
+      deleteComment,
+      customCategories,
+      addCategory,
+      updateCategory,
+      deleteCategory
+    }}>
       {children}
     </DiaryContext.Provider>
   );

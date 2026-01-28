@@ -1,29 +1,52 @@
 import React, { useState } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, setMonth, setYear, getYear } from 'date-fns';
+import { enUS, zhCN, zhTW } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useDiary } from '../../context/DiaryContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
-export default function MiniCalendar() {
-  const [currentDate, setCurrentDate] = useState(new Date());
+export default function MiniCalendar({ selectedDate, onDateSelect }) {
+  const { t, i18n } = useTranslation();
+  const [currentDate, setCurrentDate] = useState(selectedDate ? new Date(selectedDate) : new Date());
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const today = new Date();
   const navigate = useNavigate();
   const { getDiaryByDate } = useDiary();
 
+  const localeMap = {
+    'en': enUS,
+    'en-US': enUS,
+    'zh': zhCN,
+    'zh-CN': zhCN,
+    'zh-TW': zhTW
+  };
+  const currentLocale = localeMap[i18n.language] || enUS;
+
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
-  const calendarStart = startOfWeek(monthStart);
-  const calendarEnd = endOfWeek(monthEnd);
+  const calendarStart = startOfWeek(monthStart, { locale: currentLocale });
+  const calendarEnd = endOfWeek(monthEnd, { locale: currentLocale });
 
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
   const years = Array.from({ length: 10 }, (_, i) => getYear(today) - 5 + i);
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June', 
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  
+  // Generate months dynamically based on locale
+  const months = Array.from({ length: 12 }, (_, i) => {
+    return format(new Date(2024, i, 1), 'MMMM', { locale: currentLocale });
+  });
+  
+  // Generate weekdays dynamically based on locale
+  // We use a fixed week (e.g., first week of 2024 which starts on Monday or Sunday depending on locale preference?)
+  // Actually, we should just generate based on the startOfWeek of the current locale.
+  // But for the header 'S M T W...', we want short names.
+  // Let's generate a week of days starting from the start of the week for this locale.
+  const weekDays = eachDayOfInterval({
+    start: startOfWeek(new Date(), { locale: currentLocale }),
+    end: endOfWeek(new Date(), { locale: currentLocale })
+  }).map(day => format(day, 'EEEEE', { locale: currentLocale }));
 
   const prevMonth = (e) => {
     e.stopPropagation();
@@ -78,7 +101,7 @@ export default function MiniCalendar() {
         >
           <CalendarIcon size={14} className="text-cream-900/60" />
           <h3 className="text-sm font-semibold text-cream-900">
-            {format(currentDate, 'MMMM yyyy')}
+            {format(currentDate, 'MMMM yyyy', { locale: currentLocale })}
           </h3>
         </div>
         
@@ -92,7 +115,7 @@ export default function MiniCalendar() {
                 : "bg-white text-cream-900 border-cream-200 hover:bg-cream-100"
             )}
           >
-            {isPickerOpen ? 'Close' : 'Select'}
+            {isPickerOpen ? t('common.close') : t('common.select')}
           </button>
           <div className="flex gap-0.5">
             <button onClick={prevMonth} className="p-1 hover:bg-cream-200 rounded-full transition-colors">
@@ -155,7 +178,7 @@ export default function MiniCalendar() {
         {/* Calendar Grid */}
         <div className={cn("transition-opacity duration-300", isPickerOpen ? "opacity-20" : "opacity-100")}>
           <div className="grid grid-cols-7 gap-1 text-center mb-1">
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+            {weekDays.map((day, i) => (
               <div key={`${day}-${i}`} className="text-[10px] text-cream-900/40 font-medium">
                 {day}
               </div>
@@ -169,6 +192,8 @@ export default function MiniCalendar() {
               const isCurrentMonth = isSameMonth(day, currentDate);
               const hasDiary = !!getDiaryByDate(dateString);
               
+              const isSelected = selectedDate === dateString;
+              
               return (
                 <div 
                   key={day.toString()} 
@@ -177,9 +202,10 @@ export default function MiniCalendar() {
                     "aspect-square flex flex-col items-center justify-center text-xs rounded-full transition-all cursor-pointer relative",
                     !isCurrentMonth && "text-cream-900/20",
                     isCurrentMonth && "text-cream-900/80 hover:bg-cream-100",
-                    isToday && "bg-cream-900 text-white font-medium hover:bg-cream-800 shadow-md",
-                    // If not today but has diary, show a subtle indicator or style
-                    !isToday && hasDiary && "font-semibold text-cream-900"
+                    isToday && !isSelected && "bg-cream-900/10 text-cream-900 font-medium",
+                    isSelected && "bg-cream-900 text-white font-medium shadow-md scale-105",
+                    // If not today/selected but has diary, show a subtle indicator or style
+                    !isToday && !isSelected && hasDiary && "font-semibold text-cream-900"
                   )}
                 >
                   <span>{format(day, 'd')}</span>
@@ -187,7 +213,7 @@ export default function MiniCalendar() {
                   {hasDiary && (
                     <div className={cn(
                       "w-1 h-1 rounded-full mt-0.5",
-                      isToday ? "bg-white" : "bg-cream-900/40"
+                      isSelected ? "bg-white" : "bg-cream-900/40"
                     )} />
                   )}
                 </div>

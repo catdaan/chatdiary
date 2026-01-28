@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, Wand2, RefreshCw, MessageSquare, RotateCcw } from 'lucide-react';
+import { X, Wand2, RefreshCw, MessageSquare, RotateCcw } from 'lucide-react';
 import { useAI } from '../../context/AIContext';
 import { cn } from '../../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 export default function AIPolishAssistant({ isOpen, onClose, currentContent, onPreview, messages, setMessages }) {
+  const { t } = useTranslation();
   const { polishDiary, isTyping, currentPersona } = useAI();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef(null);
@@ -14,10 +16,10 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       setMessages([
-        { id: 'init', role: 'assistant', content: "Hi! I'm your writing assistant. I can help you polish your diary, fix grammar, or suggest improvements. Just ask or click 'One-Click Polish'!" }
+        { id: 'init', role: 'assistant', content: t('write.polish.greeting') }
       ]);
     }
-  }, [isOpen, messages.length, setMessages]);
+  }, [isOpen, messages.length, setMessages, t]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -34,6 +36,10 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
     const updatedMessages = [...messages, newMsg];
     setMessages(updatedMessages);
     setInput('');
+    // Fix for iOS voice input ghost text
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
     setIsProcessing(true);
 
     try {
@@ -55,7 +61,7 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
         const aiMsg = { id: Date.now() + 1, role: 'assistant', content: response };
         setMessages(prev => [...prev, aiMsg]);
     } catch (e) {
-        setMessages(prev => [...prev, { id: Date.now(), role: 'assistant', content: "Sorry, I encountered an error. Please try again." }]);
+        setMessages(prev => [...prev, { id: Date.now(), role: 'assistant', content: t('write.polish.error') }]);
     } finally {
         setIsProcessing(false);
     }
@@ -98,7 +104,7 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
         const aiMsg = { id: Date.now() + 1, role: 'assistant', content: response };
         setMessages(prev => [...prev, aiMsg]);
     } catch (e) {
-        setMessages(prev => [...prev, { id: Date.now(), role: 'assistant', content: "Sorry, I encountered an error during reroll. Please try again." }]);
+        setMessages(prev => [...prev, { id: Date.now(), role: 'assistant', content: t('write.polish.errorReroll') }]);
     } finally {
         setIsProcessing(false);
     }
@@ -160,7 +166,7 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
         <div className="p-4 border-b border-cream-100 flex items-center justify-between bg-cream-50/50">
             <div className="flex items-center gap-2 text-cream-900 font-semibold">
                 <Wand2 size={18} className="text-amber-500" />
-                <span>{currentPersona?.name || 'Writing Assistant'}</span>
+                <span>{currentPersona?.name || t('write.polish.defaultName')}</span>
             </div>
             <button onClick={onClose} className="p-1 hover:bg-cream-200/50 rounded-full transition-colors text-cream-600">
                 <X size={18} />
@@ -199,13 +205,13 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
                         <div className="flex flex-col gap-1.5 mt-1 ml-1 mb-1">
                             {polishedData.title && (
                                 <div className="flex items-start gap-2 text-xs text-cream-700">
-                                    <span className="bg-cream-200/50 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold text-cream-600 mt-0.5 shrink-0">Title</span>
+                                    <span className="bg-cream-200/50 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold text-cream-600 mt-0.5 shrink-0">{t('write.polish.title')}</span>
                                     <span className="font-medium bg-white px-2 py-1 rounded-md border border-cream-100 shadow-sm">{polishedData.title}</span>
                                 </div>
                             )}
                             {polishedData.tags && (
                                 <div className="flex items-start gap-2 text-xs text-cream-700">
-                                    <span className="bg-cream-200/50 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold text-cream-600 mt-0.5 shrink-0">Tags</span>
+                                    <span className="bg-cream-200/50 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold text-cream-600 mt-0.5 shrink-0">{t('write.polish.tags')}</span>
                                     <div className="flex flex-wrap gap-1">
                                         {polishedData.tags.map(t => (
                                             <span key={t} className="px-1.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-100 rounded text-[10px]">#{t}</span>
@@ -215,8 +221,8 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
                             )}
                             {polishedData.content && (
                                 <div className="flex items-start gap-2 text-xs text-cream-700">
-                                    <span className="bg-cream-200/50 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold text-cream-600 mt-0.5 shrink-0">Content</span>
-                                    <span className="italic text-cream-500 py-0.5">Polished text available</span>
+                                    <span className="bg-cream-200/50 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold text-cream-600 mt-0.5 shrink-0">{t('write.polish.content')}</span>
+                                    <span className="italic text-cream-500 py-0.5">{t('write.polish.polishedAvailable')}</span>
                                 </div>
                             )}
                         </div>
@@ -230,7 +236,7 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
                                     className="text-xs flex items-center gap-1 text-amber-600 hover:text-amber-700 font-medium px-1 bg-amber-50/50 py-1 rounded-md border border-amber-100/50 hover:bg-amber-100 transition-colors"
                                 >
                                     <RefreshCw size={10} />
-                                    Compare & Apply
+                                    {t('write.polish.compareApply')}
                                 </button>
                             )}
                             {/* Reroll button for the latest assistant message */}
@@ -238,10 +244,10 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
                                 <button
                                     onClick={handleReroll}
                                     className="text-xs flex items-center gap-1 text-cream-500 hover:text-cream-700 font-medium px-1 py-1 rounded-md hover:bg-cream-100 transition-colors"
-                                    title="Regenerate response"
+                                    title={t('write.polish.reroll')}
                                 >
                                     <RotateCcw size={10} />
-                                    Reroll
+                                    {t('write.polish.reroll')}
                                 </button>
                             )}
                         </div>
@@ -269,21 +275,21 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-full text-xs font-medium border border-amber-200 transition-colors whitespace-nowrap disabled:opacity-50"
                 >
                     <Wand2 size={12} />
-                    One-Click Polish
+                    {t('write.polish.oneClick')}
                 </button>
                 <button 
                      onClick={() => handleSend("Make it more emotional")}
                      disabled={isProcessing}
                      className="px-3 py-1.5 bg-cream-50 text-cream-700 hover:bg-cream-100 rounded-full text-xs font-medium border border-cream-200 transition-colors whitespace-nowrap disabled:opacity-50"
                 >
-                    Emotional
+                    {t('write.polish.emotional')}
                 </button>
                 <button 
                      onClick={() => handleSend("Fix grammar only")}
                      disabled={isProcessing}
                      className="px-3 py-1.5 bg-cream-50 text-cream-700 hover:bg-cream-100 rounded-full text-xs font-medium border border-cream-200 transition-colors whitespace-nowrap disabled:opacity-50"
                 >
-                    Grammar
+                    {t('write.polish.grammar')}
                 </button>
             </div>
             
@@ -292,7 +298,7 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                    placeholder="Ask for changes..."
+                    placeholder={t('write.polish.placeholder')}
                     disabled={isProcessing}
                     className="flex-1 bg-transparent border-none outline-none text-sm text-cream-900 placeholder:text-cream-400"
                 />
@@ -301,7 +307,7 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
                     disabled={!input.trim() || isProcessing}
                     className="p-2 bg-cream-900 text-white rounded-lg hover:bg-cream-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                    <Send size={14} />
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-circle" aria-hidden="true"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path></svg>
                 </button>
             </div>
         </div>

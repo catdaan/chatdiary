@@ -1,6 +1,7 @@
 import React from 'react';
 import { Smile, Zap, Meh, Frown, Heart } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useTranslation } from 'react-i18next';
 
 export const moods = [
   { id: 'happy', icon: Smile, color: 'text-green-500' },
@@ -10,7 +11,9 @@ export const moods = [
   { id: 'loved', icon: Heart, color: 'text-pink-500' },
 ];
 
-export const MoodSelector = ({ value, onChange }) => (
+export const MoodSelector = ({ value, onChange }) => {
+  const { t } = useTranslation();
+  return (
   <div className="flex items-center gap-1 bg-cream-50 rounded-lg p-1 border border-cream-200">
     {moods.map(m => {
       const Icon = m.icon;
@@ -23,7 +26,7 @@ export const MoodSelector = ({ value, onChange }) => (
             "p-1.5 rounded-md transition-all hover:bg-white",
             isSelected ? "bg-white shadow-sm ring-1 ring-cream-200" : "opacity-50 hover:opacity-100"
           )}
-          title={m.id}
+          title={t(`moods.${m.id}`)}
         >
           <Icon size={16} className={cn(isSelected ? m.color : "text-cream-600")} />
         </button>
@@ -31,3 +34,4 @@ export const MoodSelector = ({ value, onChange }) => (
     })}
   </div>
 );
+};

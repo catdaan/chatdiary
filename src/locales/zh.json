@@ -1,0 +1,405 @@
+{
+  "nav": {
+    "write": "写日记",
+    "calendar": "日历",
+    "categories": "分类",
+    "profile": "个人",
+    "settings": "设置"
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "close": "关闭",
+    "select": "选择"
+  },
+  "layout": {
+    "title": "AI 日记",
+    "quote": "每一天都是新的开始。",
+    "aiAssistant": "AI 助手",
+    "online": "在线"
+  },
+  "settings": {
+    "title": "设置",
+    "api": {
+      "title": "API 配置",
+      "configName": "配置名称",
+      "provider": "提供商",
+      "apiKey": "API 密钥",
+      "baseUrl": "Base URL",
+      "model": "模型",
+      "fetchModels": "获取模型",
+      "saveConfig": "保存配置",
+      "cancel": "取消",
+      "addNew": "添加新 API 配置",
+      "deleteConfirmTitle": "删除配置？",
+      "deleteConfirmMessage": "此操作无法撤销。您确定要删除此 API 配置吗？",
+      "delete": "删除",
+      "pleaseEnterApiKey": "请先输入 API 密钥。",
+      "failedToFetchModels": "获取模型失败: {{error}}",
+      "myApi": "例如：我的 API",
+      "modelPlaceholder": "例如：gpt-3.5-turbo"
+    },
+    "ai": {
+      "title": "AI 人格设置",
+      "defaultPersona": {
+        "name": "默认",
+        "description": "以用户为中心，提供情绪价值和轻松指导的支持性伙伴。"
+      },
+      "newPersonaDesc": "一个新的自定义 AI 人格",
+      "promptPlaceholder": "描述 AI 应该如何表现...",
+      "defaultSystemPromptHidden": "默认系统提示词（隐藏）",
+      "name": "名称",
+      "description": "描述",
+      "replyStyle": "回复风格",
+      "customPrompt": "自定义提示词",
+      "savePersona": "保存人格",
+      "cancel": "取消",
+      "createNew": "创建新人格",
+      "deleteConfirmTitle": "删除人格",
+      "deleteConfirmMessage": "您确定要删除此 AI 人格吗？此操作无法撤销。",
+      "delete": "删除",
+      "styles": {
+        "warm": "温暖与支持",
+        "analytical": "分析与客观",
+        "concise": "简洁与直接",
+        "humorous": "幽默与风趣"
+      },
+      "globalStyle": {
+        "title": "全局日记生成风格",
+        "description": "此风格将应用于所有 AI 生成的日记，无论当前聊天的 AI 人格如何。",
+        "preset": "风格预设",
+        "defaultPreset": "默认",
+        "wordCount": "目标字数",
+        "words": "字",
+        "withAiTrace": "保留 AI 痕迹",
+        "withAiTraceDesc": "在日记中添加 AI 的评论和分析。",
+        "stylePrompt": "风格提示词指令",
+        "editable": "(可编辑)",
+        "newPresetTitle": "新风格预设",
+        "presetNamePlaceholder": "预设名称 (例如：诗意)",
+        "stylePromptPlaceholder": "风格指令提示词...",
+        "addPreset": "添加预设"
+      }
+    },
+    "interface": {
+      "title": "界面设置",
+      "language": "系统语言",
+      "theme": "主题颜色",
+      "reset": "恢复默认",
+      "presets": "预设配色",
+      "primaryColor": "主色调",
+      "backgroundColor": "背景色",
+      "chatBackground": "聊天背景",
+      "uploadDesc": "上传图片自定义聊天背景。",
+      "upload": "上传",
+      "remove": "移除",
+      "customCss": "自定义气泡 CSS",
+      "customCssDesc": "针对 .message-user 或 .message-ai"
+    },
+    "backup": {
+      "title": "数据备份与恢复",
+      "local": {
+        "title": "本地与 iCloud 备份",
+        "description": "下载 JSON 文件或从本地备份恢复",
+        "info": "将数据下载为 JSON 文件。对于 <strong>iCloud 同步</strong>，只需将下载的文件保存到您的 iCloud Drive 文件夹即可。",
+        "download": "下载备份",
+        "restore": "从文件恢复",
+        "restoreConfirm": "您确定要恢复此备份吗？这将覆盖您当前的所有数据。",
+        "restoreSuccess": "恢复成功！页面即将刷新。",
+        "restoreError": "恢复失败：文件格式无效",
+        "downloadError": "生成备份失败"
+      },
+      "github": {
+        "title": "GitHub Gist 同步",
+        "description": "同步数据到私有 GitHub Gist",
+        "linked": "已关联",
+        "pat": "个人访问令牌 (PAT)",
+        "patHelp": "需要 <code>gist</code> 权限。",
+        "getToken": "获取令牌",
+        "gistId": "关联 Gist ID",
+        "unlink": "取消关联",
+        "autoBackup": "自动备份",
+        "autoBackupHelp": "自动同步到 Gist (每小时)",
+        "sync": "同步 (推送)",
+        "create": "创建备份",
+        "import": "导入 (恢复)",
+        "tokenRequired": "需要令牌",
+        "tokenAndGistRequired": "需要令牌和 Gist ID",
+        "restoreConfirm": "您确定要从 GitHub 恢复吗？这将用 Gist 内容覆盖您的本地数据。",
+        "syncSuccess": "已同步到 Gist",
+        "restoreError": "恢复失败: {{error}}"
+      },
+      "gdrive": {
+        "title": "Google Drive",
+        "description": "通过访问令牌直接上传",
+        "info": "推荐：使用<strong>本地备份</strong>并将文件手动保存到您的 Google Drive 文件夹以获得更好的安全性。",
+        "token": "OAuth 访问令牌 (高级)",
+        "upload": "上传到 Drive",
+        "success": "上传成功！",
+        "error": "错误: {{error}}"
+      },
+      "reset": {
+        "title": "重置所有数据",
+        "description": "永久删除所有本地数据",
+        "warning": "<strong>警告：</strong> 此操作将删除此浏览器中的所有日记、聊天记录和设置。除非您有备份，否则此操作无法撤销。",
+        "confirmBtn": "确认重置所有内容",
+        "confirmAlert": "您绝对确定吗？此操作无法撤销。"
+      }
+    }
+  },
+  "profile": {
+    "title": "个人手册",
+    "subtitle": "深入剖析自我，让 AI 更懂你。",
+    "basicInfo": {
+      "yourName": "你的名字",
+      "nickname": "昵称",
+      "identity": "身份 / 角色",
+      "identityPlaceholder": "例如：梦想家、工程师",
+      "birthday": "生日",
+      "residence": "居住地",
+      "residencePlaceholder": "城市，国家",
+      "schoolWork": "学校 / 工作",
+      "schoolWorkPlaceholder": "大学或公司",
+      "location": "地点 (工作/学校)",
+      "locationPlaceholder": "在哪里？"
+    },
+    "avatar": {
+      "upload": "上传照片",
+      "link": "图片链接",
+      "change": "更换头像",
+      "linkTitle": "图片链接"
+    },
+    "sections": {
+      "coreSelf": "核心自我",
+      "lifeExperience": "人生经历",
+      "currentFocus": "目标",
+      "interests": "兴趣爱好",
+      "connections": "人际关系"
+    },
+    "fields": {
+      "personality": "性格",
+      "personalityPlaceholder": "MBTI, 九型人格...",
+      "values": "价值观",
+      "valuesPlaceholder": "什么对你最重要？",
+      "dislikes": "雷区 / 厌恶",
+      "dislikesPlaceholder": "不可接受的事物..."
+    },
+    "timeline": {
+      "add": "添加里程碑",
+      "yearPlaceholder": "年份/时间",
+      "contentPlaceholder": "发生了什么？"
+    },
+    "focus": {
+      "add": "添加聚焦领域",
+      "placeholder": "我正专注于..."
+    },
+    "interests": {
+      "add": "添加兴趣..."
+    },
+    "connections": {
+      "add": "添加关系",
+      "namePlaceholder": "姓名",
+      "relationPlaceholder": "关系",
+      "notePlaceholder": "关于 TA 的备注..."
+    },
+    "pets": {
+      "title": "宠物",
+      "add": "添加宠物",
+      "namePlaceholder": "宠物名字",
+      "typePlaceholder": "类型 (猫、狗...)",
+      "notePlaceholder": "关于它..."
+    },
+    "save": {
+      "button": "保存更改",
+      "saved": "已保存",
+      "success": "个人资料更新成功！"
+    },
+    "common": {
+      "confirm": "确认",
+      "cancel": "取消"
+    }
+  },
+  "write": {
+    "mood_placeholder": "此刻心情如何？",
+    "greeting_initial": "嘿！今天感觉怎么样？",
+    "recording": "记录中",
+    "deleteSelected": "删除 ({{count}})",
+    "deleteConfirm": "删除 {{count}} 条消息？",
+    "generate": "生成日记",
+    "generating": "生成中...",
+    "aiAssistant": "AI 助手",
+    "saving": "保存中...",
+    "save": "保存",
+    "futureDate": {
+      "title": "明天的神秘等待着你",
+      "quote": "明天的事情留给明天的自己",
+      "goBack": "返回"
+    },
+    "chat": {
+      "placeholder": "输入你的消息...",
+      "reply": "回复",
+      "uploadImage": "上传图片",
+      "send": "发送消息",
+      "cancelSelection": "取消选择",
+      "selectMessages": "选择消息",
+      "copy": "复制",
+      "edit": "编辑",
+      "delete": "删除",
+      "regenerate": "重新生成",
+      "mode": "聊天模式",
+      "manualMode": "手动模式"
+    },
+    "manual": {
+      "titlePlaceholder": "标题",
+      "category": "分类",
+      "tags": "标签",
+      "contentPlaceholder": "开始写作..."
+    },
+    "generated": {
+      "title": "已生成的日记",
+      "crafting": "正在撰写你的日记...",
+      "titlePlaceholder": "日记标题",
+      "reroll": "重新生成",
+      "save": "保存到日记"
+    },
+    "categorySelector": {
+      "placeholder": "选择或输入分类...",
+      "clear": "清除",
+      "create": "创建 \"{{value}}\"",
+      "noCategories": "未找到分类。"
+    },
+    "tagEditor": {
+      "placeholder": "添加标签..."
+    },
+    "diffViewer": {
+      "noChanges": "未检测到更改。",
+      "back": "返回编辑器",
+      "metadataChanges": "建议的元数据更改",
+      "title": "标题",
+      "untitled": "(无标题)",
+      "tags": "标签",
+      "noTags": "(无标签)",
+      "instructions": "点击高亮部分以切换接受/拒绝",
+      "added": "新增",
+      "removed": "移除",
+      "include": "点击包含",
+      "discard": "点击丢弃",
+      "delete": "点击删除",
+      "restore": "点击恢复",
+      "rejectAll": "全部拒绝",
+      "applySelected": "应用所选"
+    },
+    "polish": {
+      "greeting": "你好！我是你的写作助手。我可以帮你润色日记、修改语法或提供改进建议。直接提问或点击“一键润色”！",
+      "error": "抱歉，我遇到了一些错误。请重试。",
+      "errorReroll": "抱歉，重新生成时遇到错误。请重试。",
+      "defaultName": "写作助手",
+      "title": "标题",
+      "tags": "标签",
+      "content": "内容",
+      "polishedAvailable": "可用的润色文本",
+      "compareApply": "对比并应用",
+      "reroll": "重新生成",
+      "oneClick": "一键润色",
+      "emotional": "更具情感",
+      "grammar": "仅修语法",
+      "placeholder": "提出修改要求..."
+    },
+    "moods": {
+      "happy": "开心",
+      "excited": "兴奋",
+      "neutral": "平静",
+      "sad": "难过",
+      "loved": "被爱"
+    },
+    "alerts": {
+      "noHistory": "未找到 {{date}} 的聊天记录，无法生成日记。",
+      "generateFailed": "生成日记失败: {{error}}",
+      "uploadFailed": "上传图片失败。",
+      "saveFailed": "保存日记失败: {{error}}"
+    }
+  },
+  "timeline": {
+    "title": "时间轴",
+    "select_date": "选择日期",
+    "hide_calendar": "隐藏日历",
+    "delete_title": "删除日记",
+    "delete_confirm": "确定要删除这篇日记吗？此操作无法撤销。",
+    "delete_button": "删除",
+    "years_ago": "{{count}} 年前",
+    "read_memory": "回顾记忆",
+    "no_memories": "还没有记忆。开始记录吧！"
+  },
+  "categories": {
+    "title": "书架",
+    "manage": "管理",
+    "done": "完成",
+    "entries": "{{count}} 篇日记",
+    "edit_dialog": {
+      "edit_title": "编辑分类",
+      "add_title": "新建分类",
+      "name_label": "名称",
+      "name_placeholder": "分类名称",
+      "cover_label": "封面图片 (可选)",
+      "change_image": "更换图片",
+      "upload_image": "上传图片",
+      "remove_image": "移除",
+      "recommendation": "推荐尺寸：3:4 竖向图片",
+      "color_label": "颜色",
+      "cancel": "取消",
+      "save": "保存更改",
+      "create": "创建"
+    },
+    "delete_dialog": {
+      "title": "删除分类",
+      "message": "您确定要删除“{{name}}”吗？该分类下的日记将保留，但会变为未分类状态。",
+      "confirm": "删除"
+    },
+    "defaults": {
+      "Uncategorized": "未分类",
+      "Daily Life": "日常生活",
+      "Work": "工作",
+      "Travel": "旅行"
+    },
+    "actions": {
+      "edit": "编辑",
+      "delete": "删除"
+    },
+    "no_diaries": "该分类下暂无日记"
+  },
+  "diary_entry": {
+    "entry_count": "{{count}} 篇日记",
+    "write_for_this_day": "补写今日",
+    "go_back": "返回",
+    "add_new": "新建",
+    "no_entries": "未找到 {{date}} 的日记",
+    "back_to_timeline": "返回时间轴",
+    "add_another_entry": "添加另一篇日记"
+  },
+  "diary_item": {
+    "delete_diary_title": "删除日记",
+    "delete_diary_message": "确定要删除这篇日记吗？此操作无法撤销。",
+    "delete_comment_title": "删除评论",
+    "delete_comment_message": "确定要删除这条评论吗？此操作无法撤销。",
+    "delete_chat_history_confirm": "确定要删除聊天记录吗？此操作无法撤销。",
+    "delete_chat_history_title": "删除聊天记录",
+    "title_placeholder": "标题",
+    "category_label": "分类",
+    "tags_label": "标签",
+    "content_placeholder": "写点什么...",
+    "chat_history": "聊天记录",
+    "messages_count": "{{count}} 条消息",
+    "comments": "评论",
+    "ai_author": "AI ({{name}})",
+    "user_author": "你",
+    "no_comments": "暂无评论。问问 AI 的想法？",
+    "ask_ai": "请求 AI 评论",
+    "add_comment_placeholder": "添加评论...",
+    "edit": "编辑",
+    "save": "保存",
+    "delete_diary": "删除日记",
+    "delete_comment": "删除评论"
+  }
+}

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useUser } from './UserContext';
 import { useDiary } from './DiaryContext';
 
@@ -90,11 +91,14 @@ const DEFAULT_PERSONAS = [
     description: 'User-centric, supportive friend who provides emotional value and casual guidance.',
     replyStyle: 'warm', 
     customPrompt: `You are an empathetic and curious AI companion.提供像 GPT 預設助手般的專業協助。當用戶分享煩惱時，請先聆聽並給予情感支持（情緒價值），隨後轉向邏輯分析或建議。`,
+    diaryStyle: 'Pure Ghostwriter',
+    diaryStylePrompt: 'Write strictly as the user. Record events and feelings directly and authentically. Do not analyze, do not summarize, do not be poetic unless the user is. Just pure, raw diary recording.',
     isDefault: true
   }
 ];
 
 export const AIProvider = ({ children }) => {
+  const { t } = useTranslation();
   const { profile } = useUser();
   const { diaries } = useDiary();
   const [personas, setPersonas] = useState(() => {
@@ -132,6 +136,44 @@ export const AIProvider = ({ children }) => {
     return localStorage.getItem('ai_current_api_config_id') || 'official';
   });
 
+  // Global Diary Settings (Decoupled from Persona)
+  const [diarySettings, setDiarySettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ai_diary_settings');
+      const parsed = saved ? JSON.parse(saved) : {};
+      return {
+        wordCount: parsed.wordCount || 300,
+        diaryStyle: parsed.diaryStyle || 'default', 
+        diaryStylePrompt: parsed.diaryStylePrompt || '',
+        withAiTrace: parsed.withAiTrace || false
+      };
+    } catch (e) {
+      return {
+        wordCount: 300,
+        diaryStyle: 'default',
+        diaryStylePrompt: '',
+        withAiTrace: false
+      };
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('ai_diary_settings', JSON.stringify(diarySettings));
+  }, [diarySettings]);
+
+  // Migration: Reset old default styles to new 'Default'
+  useEffect(() => {
+    const oldDefaults = ['Pure Ghostwriter', 'Empathetic & Reflective'];
+    // Only migrate if we are strictly on the old defaults
+    if (oldDefaults.includes(diarySettings.diaryStyle)) {
+       setDiarySettings(prev => ({
+         ...prev,
+         diaryStyle: 'Default',
+         diaryStylePrompt: ''
+       }));
+    }
+  }, []);
+
   // Date Locking State
   const [activeDate, setActiveDate] = useState(() => {
     const now = new Date();
@@ -152,7 +194,12 @@ export const AIProvider = ({ children }) => {
     const saved = localStorage.getItem(key);
     
     if (saved) {
-      setMessages(JSON.parse(saved));
+      const parsed = JSON.parse(saved);
+      // Update default greeting if it exists
+      if (parsed.length > 0 && parsed[0].id === 1 && parsed[0].sender === 'ai') {
+        parsed[0].text = t('write.greeting_initial');
+      }
+      setMessages(parsed);
     } else {
       // If it's today and we have legacy data, migrate it
       // Use Local Time for consistency with activeDate
@@ -164,22 +211,45 @@ export const AIProvider = ({ children }) => {
         if (legacy) {
           try {
             const legacyMsgs = JSON.parse(legacy);
-            setMessages(legacyMsgs);
+            
+            // Validate if legacy messages are actually from today to prevent pollution from previous days
+            let isFromToday = false;
+            if (legacyMsgs.length > 0) {
+                 const lastMsg = legacyMsgs[legacyMsgs.length - 1];
+                 // If user chatted, id will be timestamp. If only greeting (id=1), treat as fresh start.
+                 if (lastMsg.id !== 1) {
+                     const lastMsgDate = new Date(lastMsg.id);
+                     if (!isNaN(lastMsgDate.getTime())) {
+                         const lastMsgDateStr = `${lastMsgDate.getFullYear()}-${String(lastMsgDate.getMonth() + 1).padStart(2, '0')}-${String(lastMsgDate.getDate()).padStart(2, '0')}`;
+                         if (lastMsgDateStr === todayStr) {
+                             isFromToday = true;
+                         }
+                     }
+                 }
+            }
+            
+            if (isFromToday) {
+                 setMessages(legacyMsgs);
+            } else {
+                 // Legacy data is from a past date, so start fresh for today
+                 setMessages([{ id: 1, sender: 'ai', text: t('write.greeting_initial') }]);
+            }
+            
             // Don't delete legacy yet, just in case
           } catch (e) {
-            setMessages([{ id: 1, sender: 'ai', text: "Hi there! How are you feeling today?" }]);
+            setMessages([{ id: 1, sender: 'ai', text: t('write.greeting_initial') }]);
           }
         } else {
-          setMessages([{ id: 1, sender: 'ai', text: "Hi there! How are you feeling today?" }]);
+          setMessages([{ id: 1, sender: 'ai', text: t('write.greeting_initial') }]);
         }
       } else {
         // New day, empty chat
-        setMessages([{ id: 1, sender: 'ai', text: "Hi there! How are you feeling today?" }]);
+        setMessages([{ id: 1, sender: 'ai', text: t('write.greeting_initial') }]);
       }
     }
     setIsChatLoaded(true); // Mark as loaded
     setLoadedDate(activeDate); // Mark this date as loaded
-  }, [activeDate]);
+  }, [activeDate, t]);
 
   const [isTyping, setIsTyping] = useState(false);
 
@@ -504,12 +574,21 @@ export const AIProvider = ({ children }) => {
       }
 
       const data = await response.json();
+      
+      // Detailed logging for debugging
+      if (data.candidates && data.candidates[0] && data.candidates[0].finishReason !== "STOP") {
+          console.warn(`[AIContext] Gemini Finish Reason: ${data.candidates[0].finishReason}`, data);
+      }
+
       // Extract text from Gemini response
       try {
+        if (!data.candidates || !data.candidates[0]) {
+             throw new Error(`Gemini Error: No candidates returned. Details: ${JSON.stringify(data)}`);
+        }
         return data.candidates[0].content.parts[0].text;
       } catch (e) {
         console.error("Gemini response parsing error:", data);
-        throw new Error("Failed to parse Gemini response.");
+        throw new Error(`Failed to parse Gemini response: ${e.message}. Response: ${JSON.stringify(data).substring(0, 200)}...`);
       }
 
     } else {
@@ -633,14 +712,18 @@ ${d.ai_briefing.unfinished_topics ? `- Unfinished Topics: ${d.ai_briefing.unfini
 
     // Construct System Prompt dynamically to match the persona
     const systemPrompt = `
-You are the user's AI companion, "${persona.name}".
-Your core personality and behavior are defined below:
-${persona.customPrompt || persona.description}
+    You are a professional writing assistant and editor.
+    Your task is to help the user write and polish their diary entry in "Manual Mode".
 
-Your current specific task is to help the user write and polish their diary entry in "Manual Mode".
-You are NOT a cold, robotic editor. You are the SAME character defined above, just helping with writing now.
+    # DIARY WRITING STYLE
+    The user has configured a specific writing style for this AI persona. You MUST adhere to this style guidance:
+    "${diarySettings.diaryStylePrompt || 'Maintain a natural, personal tone.'}"
 
-# CURRENT CONTEXT:
+    # LENGTH CONSTRAINT
+    Target Word Count: Approximately ${diarySettings.wordCount || 300} words.
+    Keep the diary concise and within this limit.
+
+    # CURRENT CONTEXT:
 - **Current System Time**: ${new Date().toLocaleString()}
 - **Target Diary Date**: ${activeDate}
 - **User Profile**: Name: ${profile.name || 'User'}, Focus: ${JSON.stringify(profile.currentFocus || [])}
@@ -886,7 +969,7 @@ ${persona.customPrompt || "No custom settings."}
   };
 
   // Real AI Diary Generation
-  const generateDiary = async (chatHistory, style = 'no_ai_trace') => {
+  const generateDiary = async (chatHistory, instruction = '') => {
     try {
       const config = currentApiConfig;
       
@@ -898,12 +981,19 @@ ${persona.customPrompt || "No custom settings."}
         .map(d => `- Date: ${d.date}\n- Summary: ${d.summary || d.content.substring(0, 100) + '...'}`)
         .join('\n\n');
 
+      // Get diaries ALREADY written TODAY (to avoid repetition)
+      const todaysDiaries = [...diaries]
+        .filter(d => d.date === activeDate)
+        .map(d => `- Title: ${d.title}\n- Summary/Content: ${d.summary || d.content.substring(0, 200)}...`)
+        .join('\n\n');
+
       // Use activeDate instead of current system date
       // Parse activeDate to get a friendly format
       const [year, month, day] = activeDate.split('-').map(Number);
       const dateObj = new Date(year, month - 1, day);
       const today = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
       
+      const style = diarySettings.withAiTrace ? 'with_ai_trace' : 'no_ai_trace';
       const systemPrompt = DIARY_PROMPTS[style] || DIARY_PROMPTS.no_ai_trace;
 
       const userProfileContext = `
@@ -915,15 +1005,31 @@ ${persona.customPrompt || "No custom settings."}
       - Interests: ${profile.interests || 'Not set'}
       `;
 
+      // Limit chat history to avoid token limits (keep last 50 messages)
+      const limitedChatHistory = chatHistory.slice(-50);
+
       // Convert chat history to text format for context with rough timestamps
-      // msg.id is usually a timestamp
-      const chatContext = chatHistory.map(msg => {
-          const time = new Date(msg.id).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-          return `[${time}] ${msg.sender}: ${msg.text}`;
-      }).join('\n');
+      // msg.id is usually a timestamp, but handle cases where it isn't
+      const chatContext = limitedChatHistory.map(msg => {
+          let timeStr = '';
+          const date = new Date(msg.id);
+          if (!isNaN(date.getTime())) {
+              timeStr = `[${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}] `;
+          }
+          return `${timeStr}${msg.sender}: ${msg.text}`;
+      }).join('\n').substring(0, 15000); // Hard limit to ~15k chars to be safe
       
       const fullPrompt = `
       ${systemPrompt}
+
+      # DIARY WRITING STYLE
+      The user has configured a specific writing style for this AI persona. You MUST adhere to this style guidance:
+      "${diarySettings.diaryStylePrompt || 'Maintain a natural, personal tone.'}"
+      
+      IMPORTANT: 
+      1. You must ALWAYS maintain the "First Person" ('I') perspective and the "Ghostwriter" role (never reveal you are AI).
+      2. You must ALWAYS stick to the actual events in the chat (no hallucinations).
+      3. ONLY override the *tone* or *formatting* rules (like emojis, sentence length) if the user's custom style above explicitly demands it. Otherwise, the "Ghostwriter" rules (No AI traces, authentic voice) remain absolute.
 
       Current Date: ${today}
 
@@ -931,6 +1037,10 @@ ${persona.customPrompt || "No custom settings."}
 
       Recent Diaries (for context only):
       ${recentDiaries || "No recent diaries found."}
+
+      ${todaysDiaries ? `# EXISTING DIARIES FOR TODAY (DO NOT REPEAT):\nThe user has already written the following entries for today. \n- IF the chat history contains NEW events not covered here, focus strictly on those NEW events.\n- IF the chat history is just more detail on the same events, write a "Part 2" or reflective continuation.\n- AVOID simply re-summarizing what is already written below:\n${todaysDiaries}\n` : ''}
+
+      ${instruction ? `# ADDITIONAL USER INSTRUCTION:\nThe user has requested a specific adjustment for this version: "${instruction}".\nPlease incorporate this instruction while maintaining the persona and style.\n` : ''}
 
       # LANGUAGE INSTRUCTION:
       The user is writing in a specific language. 
@@ -1136,7 +1246,7 @@ STRICT LIMIT: 30 characters maximum.
     }
   };
 
-  const regenerateLastResponse = async () => {
+  const regenerateLastResponse = async (instruction = null) => {
     // 1. Check if the last message is from AI
     const lastMsg = messages[messages.length - 1];
     if (!lastMsg || lastMsg.sender !== 'ai') return;
@@ -1151,7 +1261,7 @@ STRICT LIMIT: 30 characters maximum.
     
     // 3. Trigger AI response again with the reduced history
     setIsTyping(true);
-    const responses = await generateChatResponse(newHistory);
+    const responses = await generateChatResponse(newHistory, instruction);
     
     const responseArray = Array.isArray(responses) ? responses : [responses];
     
@@ -1199,6 +1309,8 @@ STRICT LIMIT: 30 characters maximum.
       addApiConfig,
       updateApiConfig,
       deleteApiConfig,
+      diarySettings,
+      setDiarySettings,
       generateDiary,
       generateChatResponse,
       generateComment,

@@ -1,0 +1,405 @@
+{
+  "nav": {
+    "write": "寫日記",
+    "calendar": "日曆",
+    "categories": "分類",
+    "profile": "個人",
+    "settings": "設定"
+  },
+  "common": {
+    "save": "儲存",
+    "cancel": "取消",
+    "delete": "刪除",
+    "edit": "編輯",
+    "close": "關閉",
+    "select": "選擇"
+  },
+  "layout": {
+    "title": "AI 日記",
+    "quote": "每一天都是新的開始。",
+    "aiAssistant": "AI 助手",
+    "online": "在線"
+  },
+  "settings": {
+    "title": "設定",
+    "api": {
+      "title": "API 配置",
+      "configName": "配置名稱",
+      "provider": "提供商",
+      "apiKey": "API 金鑰",
+      "baseUrl": "Base URL",
+      "model": "模型",
+      "fetchModels": "獲取模型",
+      "saveConfig": "儲存配置",
+      "cancel": "取消",
+      "addNew": "新增 API 配置",
+      "deleteConfirmTitle": "刪除配置？",
+      "deleteConfirmMessage": "此操作無法復原。您確定要刪除此 API 配置嗎？",
+      "delete": "刪除",
+      "pleaseEnterApiKey": "請先輸入 API 金鑰。",
+      "failedToFetchModels": "獲取模型失敗: {{error}}",
+      "myApi": "例如：我的 API",
+      "modelPlaceholder": "例如：gpt-3.5-turbo"
+    },
+    "ai": {
+      "title": "AI 人格設定",
+      "defaultPersona": {
+        "name": "預設",
+        "description": "以用戶為中心，提供情緒價值和輕鬆指導的支持性夥伴。"
+      },
+      "newPersonaDesc": "一個新的自訂 AI 人格",
+      "promptPlaceholder": "描述 AI 應該如何表現...",
+      "defaultSystemPromptHidden": "預設系統提示詞（隱藏）",
+      "name": "名稱",
+      "description": "描述",
+      "replyStyle": "回覆風格",
+      "customPrompt": "自訂提示詞",
+      "savePersona": "儲存人格",
+      "cancel": "取消",
+      "createNew": "建立新人格",
+      "deleteConfirmTitle": "刪除人格",
+      "deleteConfirmMessage": "您確定要刪除此 AI 人格嗎？此操作無法復原。",
+      "delete": "刪除",
+      "styles": {
+        "warm": "溫暖與支持",
+        "analytical": "分析與客觀",
+        "concise": "簡潔與直接",
+        "humorous": "幽默與風趣"
+      },
+      "globalStyle": {
+        "title": "全局日記生成風格",
+        "description": "此風格將應用於所有 AI 生成的日記，無論當前聊天的 AI 人格如何。",
+        "preset": "風格預設",
+        "defaultPreset": "預設",
+        "wordCount": "目標字數",
+        "words": "字",
+        "withAiTrace": "保留 AI 痕跡",
+        "withAiTraceDesc": "在日記中添加 AI 的評論和分析。",
+        "stylePrompt": "風格提示詞指令",
+        "editable": "(可編輯)",
+        "newPresetTitle": "新風格預設",
+        "presetNamePlaceholder": "預設名稱 (例如：詩意)",
+        "stylePromptPlaceholder": "風格指令提示詞...",
+        "addPreset": "新增預設"
+      }
+    },
+    "interface": {
+      "title": "介面設定",
+      "language": "系統語言",
+      "theme": "主題顏色",
+      "reset": "恢復預設",
+      "presets": "預設配色",
+      "primaryColor": "主色調",
+      "backgroundColor": "背景色",
+      "chatBackground": "聊天背景",
+      "uploadDesc": "上傳圖片自訂聊天背景。",
+      "upload": "上傳",
+      "remove": "移除",
+      "customCss": "自訂氣泡 CSS",
+      "customCssDesc": "針對 .message-user 或 .message-ai"
+    },
+    "backup": {
+      "title": "資料備份與還原",
+      "local": {
+        "title": "本地與 iCloud 備份",
+        "description": "下載 JSON 檔案或從本地備份還原",
+        "info": "將資料下載為 JSON 檔案。對於 <strong>iCloud 同步</strong>，只需將下載的檔案儲存到您的 iCloud Drive 資料夾即可。",
+        "download": "下載備份",
+        "restore": "從檔案還原",
+        "restoreConfirm": "您確定要還原此備份嗎？這將覆蓋您目前的所有資料。",
+        "restoreSuccess": "還原成功！頁面即將重新整理。",
+        "restoreError": "還原失敗：檔案格式無效",
+        "downloadError": "產生備份失敗"
+      },
+      "github": {
+        "title": "GitHub Gist 同步",
+        "description": "同步資料到私有 GitHub Gist",
+        "linked": "已連結",
+        "pat": "個人存取權杖 (PAT)",
+        "patHelp": "需要 <code>gist</code> 權限。",
+        "getToken": "獲取權杖",
+        "gistId": "連結 Gist ID",
+        "unlink": "取消連結",
+        "autoBackup": "自動備份",
+        "autoBackupHelp": "自動同步到 Gist (每小時)",
+        "sync": "同步 (推送)",
+        "create": "建立備份",
+        "import": "匯入 (還原)",
+        "tokenRequired": "需要權杖",
+        "tokenAndGistRequired": "需要權杖和 Gist ID",
+        "restoreConfirm": "您確定要從 GitHub 還原嗎？這將用 Gist 內容覆蓋您的本地資料。",
+        "syncSuccess": "已同步到 Gist",
+        "restoreError": "還原失敗: {{error}}"
+      },
+      "gdrive": {
+        "title": "Google Drive",
+        "description": "透過存取權杖直接上傳",
+        "info": "推薦：使用<strong>本地備份</strong>並將檔案手動儲存到您的 Google Drive 資料夾以獲得更好的安全性。",
+        "token": "OAuth 存取權杖 (高級)",
+        "upload": "上傳到 Drive",
+        "success": "上傳成功！",
+        "error": "錯誤: {{error}}"
+      },
+      "reset": {
+        "title": "重設所有資料",
+        "description": "永久刪除所有本地資料",
+        "warning": "<strong>警告：</strong> 此操作將刪除此瀏覽器中的所有日記、聊天記錄和設定。除非您有備份，否則此操作無法復原。",
+        "confirmBtn": "確認重設所有內容",
+        "confirmAlert": "您絕對確定嗎？此操作無法復原。"
+      }
+    }
+  },
+  "profile": {
+    "title": "個人手冊",
+    "subtitle": "深入剖析自我，讓 AI 更懂你。",
+    "basicInfo": {
+      "yourName": "你的名字",
+      "nickname": "暱稱",
+      "identity": "身分 / 角色",
+      "identityPlaceholder": "例如：夢想家、工程師",
+      "birthday": "生日",
+      "residence": "居住地",
+      "residencePlaceholder": "城市，國家",
+      "schoolWork": "學校 / 工作",
+      "schoolWorkPlaceholder": "大學或公司",
+      "location": "地點 (工作/學校)",
+      "locationPlaceholder": "在哪裡？"
+    },
+    "avatar": {
+      "upload": "上傳照片",
+      "link": "圖片連結",
+      "change": "更換頭像",
+      "linkTitle": "圖片連結"
+    },
+    "sections": {
+      "coreSelf": "核心自我",
+      "lifeExperience": "人生經歷",
+      "currentFocus": "目標",
+      "interests": "興趣愛好",
+      "connections": "人際關係"
+    },
+    "fields": {
+      "personality": "性格",
+      "personalityPlaceholder": "MBTI, 九型人格...",
+      "values": "價值觀",
+      "valuesPlaceholder": "什麼對你最重要？",
+      "dislikes": "雷區 / 厭惡",
+      "dislikesPlaceholder": "不可接受的事物..."
+    },
+    "timeline": {
+      "add": "新增里程碑",
+      "yearPlaceholder": "年份/時間",
+      "contentPlaceholder": "發生了什麼？"
+    },
+    "focus": {
+      "add": "新增專注項目",
+      "placeholder": "我正專注於..."
+    },
+    "interests": {
+      "add": "新增興趣..."
+    },
+    "connections": {
+      "add": "新增關係",
+      "namePlaceholder": "姓名",
+      "relationPlaceholder": "關係",
+      "notePlaceholder": "關於 TA 的備註..."
+    },
+    "pets": {
+      "title": "寵物",
+      "add": "新增寵物",
+      "namePlaceholder": "寵物名字",
+      "typePlaceholder": "類型 (貓、狗...)",
+      "notePlaceholder": "關於牠..."
+    },
+    "save": {
+      "button": "儲存變更",
+      "saved": "已儲存",
+      "success": "個人資料更新成功！"
+    },
+    "common": {
+      "confirm": "確認",
+      "cancel": "取消"
+    }
+  },
+  "write": {
+    "mood_placeholder": "此刻心情如何？",
+    "greeting_initial": "嘿！今天感覺怎麼樣？",
+    "recording": "記錄中",
+    "deleteSelected": "刪除 ({{count}})",
+    "deleteConfirm": "刪除 {{count}} 條訊息？",
+    "generate": "生成日記",
+    "generating": "生成中...",
+    "aiAssistant": "AI 助手",
+    "saving": "儲存中...",
+    "save": "儲存",
+    "futureDate": {
+      "title": "明天的神秘等待著你",
+      "quote": "明天的事情留給明天的自己",
+      "goBack": "返回"
+    },
+    "chat": {
+      "placeholder": "輸入你的訊息...",
+      "reply": "回覆",
+      "uploadImage": "上傳圖片",
+      "send": "發送訊息",
+      "cancelSelection": "取消選擇",
+      "selectMessages": "選擇訊息",
+      "copy": "複製",
+      "edit": "編輯",
+      "delete": "刪除",
+      "regenerate": "重新生成",
+      "mode": "聊天模式",
+      "manualMode": "手動模式"
+    },
+    "manual": {
+      "titlePlaceholder": "標題",
+      "category": "分類",
+      "tags": "標籤",
+      "contentPlaceholder": "開始寫作..."
+    },
+    "generated": {
+      "title": "已生成的日記",
+      "crafting": "正在撰寫你的日記...",
+      "titlePlaceholder": "日記標題",
+      "reroll": "重新生成",
+      "save": "保存到日記"
+    },
+    "categorySelector": {
+      "placeholder": "選擇或輸入分類...",
+      "clear": "清除",
+      "create": "創建 \"{{value}}\"",
+      "noCategories": "未找到分類。"
+    },
+    "tagEditor": {
+      "placeholder": "添加標籤..."
+    },
+    "diffViewer": {
+      "noChanges": "未檢測到更改。",
+      "back": "返回編輯器",
+      "metadataChanges": "建議的元數據更改",
+      "title": "標題",
+      "untitled": "(無標題)",
+      "tags": "標籤",
+      "noTags": "(無標籤)",
+      "instructions": "點擊高亮部分以切換接受/拒絕",
+      "added": "新增",
+      "removed": "移除",
+      "include": "點擊包含",
+      "discard": "點擊丟棄",
+      "delete": "點擊刪除",
+      "restore": "點擊恢復",
+      "rejectAll": "全部拒絕",
+      "applySelected": "應用所選"
+    },
+    "polish": {
+      "greeting": "你好！我是你的寫作助手。我可以幫你潤色日記、修改語法或提供改進建議。直接提問或點擊“一鍵潤色”！",
+      "error": "抱歉，我遇到了一些錯誤。請重試。",
+      "errorReroll": "抱歉，重新生成時遇到錯誤。請重試。",
+      "defaultName": "寫作助手",
+      "title": "標題",
+      "tags": "標籤",
+      "content": "內容",
+      "polishedAvailable": "可用的潤色文本",
+      "compareApply": "對比並應用",
+      "reroll": "重新生成",
+      "oneClick": "一鍵潤色",
+      "emotional": "更具情感",
+      "grammar": "僅修語法",
+      "placeholder": "提出修改要求..."
+    },
+    "moods": {
+      "happy": "開心",
+      "excited": "興奮",
+      "neutral": "平靜",
+      "sad": "難過",
+      "loved": "被愛"
+    },
+    "alerts": {
+      "noHistory": "未找到 {{date}} 的聊天記錄，無法生成日記。",
+      "generateFailed": "生成日記失敗: {{error}}",
+      "uploadFailed": "上傳圖片失敗。",
+      "saveFailed": "儲存日記失敗: {{error}}"
+    }
+  },
+  "timeline": {
+    "title": "時間軸",
+    "select_date": "選擇日期",
+    "hide_calendar": "隱藏日曆",
+    "delete_title": "刪除日記",
+    "delete_confirm": "確定要刪除這篇日記嗎？此操作無法撤銷。",
+    "delete_button": "刪除",
+    "years_ago": "{{count}} 年前",
+    "read_memory": "回顧記憶",
+    "no_memories": "還沒有記憶。開始記錄吧！"
+  },
+  "categories": {
+    "title": "書架",
+    "manage": "管理",
+    "done": "完成",
+    "entries": "{{count}} 篇日記",
+    "edit_dialog": {
+      "edit_title": "編輯分類",
+      "add_title": "新增分類",
+      "name_label": "名稱",
+      "name_placeholder": "分類名稱",
+      "cover_label": "封面圖片 (可選)",
+      "change_image": "更換圖片",
+      "upload_image": "上傳圖片",
+      "remove_image": "移除",
+      "recommendation": "推薦尺寸：3:4 直向圖片",
+      "color_label": "顏色",
+      "cancel": "取消",
+      "save": "儲存變更",
+      "create": "建立"
+    },
+    "delete_dialog": {
+      "title": "刪除分類",
+      "message": "您確定要刪除「{{name}}」嗎？該分類下的日記將保留，但會變為未分類狀態。",
+      "confirm": "刪除"
+    },
+    "defaults": {
+      "Uncategorized": "未分類",
+      "Daily Life": "日常生活",
+      "Work": "工作",
+      "Travel": "旅行"
+    },
+    "actions": {
+      "edit": "編輯",
+      "delete": "刪除"
+    },
+    "no_diaries": "該分類下暫無日記"
+  },
+  "diary_entry": {
+    "entry_count": "{{count}} 篇日記",
+    "write_for_this_day": "補寫今日",
+    "go_back": "返回",
+    "add_new": "新建",
+    "no_entries": "未找到 {{date}} 的日記",
+    "back_to_timeline": "返回時間軸",
+    "add_another_entry": "添加另一篇日記"
+  },
+  "diary_item": {
+    "delete_diary_title": "刪除日記",
+    "delete_diary_message": "確定要刪除這篇日記嗎？此操作無法撤銷。",
+    "delete_comment_title": "刪除評論",
+    "delete_comment_message": "確定要刪除這條評論嗎？此操作無法撤銷。",
+    "delete_chat_history_confirm": "確定要刪除聊天記錄嗎？此操作無法撤銷。",
+    "delete_chat_history_title": "刪除聊天記錄",
+    "title_placeholder": "標題",
+    "category_label": "分類",
+    "tags_label": "標籤",
+    "content_placeholder": "寫點什麼...",
+    "chat_history": "聊天記錄",
+    "messages_count": "{{count}} 條消息",
+    "comments": "評論",
+    "ai_author": "AI ({{name}})",
+    "user_author": "你",
+    "no_comments": "暫無評論。問問 AI 的想法？",
+    "ask_ai": "請求 AI 評論",
+    "add_comment_placeholder": "添加評論...",
+    "edit": "編輯",
+    "save": "儲存",
+    "delete_diary": "刪除日記",
+    "delete_comment": "刪除評論"
+  }
+}

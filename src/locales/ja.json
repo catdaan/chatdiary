@@ -1,0 +1,407 @@
+{
+  "nav": {
+    "write": "書く",
+    "calendar": "カレンダー",
+    "categories": "カテゴリー",
+    "profile": "プロフィール",
+    "settings": "設定"
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "close": "閉じる",
+    "select": "選択"
+  },
+  "layout": {
+    "title": "AI日記",
+    "quote": "毎日が新しい始まり。",
+    "aiAssistant": "AIアシスタント",
+    "online": "オンライン"
+  },
+  "settings": {
+    "title": "設定",
+    "api": {
+      "title": "API設定",
+      "configName": "設定名",
+      "provider": "プロバイダー",
+      "apiKey": "APIキー",
+      "baseUrl": "ベースURL",
+      "model": "モデル",
+      "fetchModels": "モデルを取得",
+      "saveConfig": "設定を保存",
+      "cancel": "キャンセル",
+      "addNew": "新しいAPI設定を追加",
+      "deleteConfirmTitle": "設定を削除しますか？",
+      "deleteConfirmMessage": "この操作は取り消せません。このAPI設定を削除してもよろしいですか？",
+      "delete": "削除",
+      "pleaseEnterApiKey": "まずAPIキーを入力してください。",
+      "failedToFetchModels": "モデルの取得に失敗しました: {{error}}",
+      "myApi": "例: My API",
+      "modelPlaceholder": "例: gpt-3.5-turbo"
+    },
+    "ai": {
+      "title": "AIペルソナ設定",
+      "defaultPersona": {
+        "name": "デフォルト",
+        "description": "ユーザー中心の、協力的で感情的な価値とカジュアルなガイダンスを提供する友人。"
+      },
+      "newPersonaDesc": "新しいカスタムAIペルソナ",
+      "promptPlaceholder": "AIの振る舞いを記述してください...",
+      "defaultSystemPromptHidden": "デフォルトシステムプロンプト（非表示）",
+      "name": "名前",
+      "description": "説明",
+      "replyStyle": "返信スタイル",
+      "customPrompt": "カスタムプロンプト",
+      "savePersona": "ペルソナを保存",
+      "cancel": "キャンセル",
+      "createNew": "新しいペルソナを作成",
+      "deleteConfirmTitle": "ペルソナを削除",
+      "deleteConfirmMessage": "このAIペルソナを削除してもよろしいですか？この操作は取り消せません。",
+      "delete": "削除",
+      "styles": {
+        "warm": "温かく協力的",
+        "analytical": "分析的・客観的",
+        "concise": "簡潔・直接的",
+        "humorous": "ユーモラス・遊び心"
+      },
+      "globalStyle": {
+        "title": "全体の日記生成スタイル",
+        "description": "このスタイルは、アクティブなチャットペルソナに関係なく、すべてのAI生成日記に適用されます。",
+        "preset": "スタイルプリセット",
+        "defaultPreset": "デフォルト",
+        "wordCount": "目標文字数",
+        "words": "文字",
+        "withAiTrace": "AIの痕跡を残す",
+        "withAiTraceDesc": "日記にAIのコメントと分析を追加します。",
+        "stylePrompt": "スタイルプロンプト指示",
+        "editable": "（編集可能）",
+        "newPresetTitle": "新しいスタイルプリセット",
+        "presetNamePlaceholder": "プリセット名（例：詩的）",
+        "stylePromptPlaceholder": "スタイル指示プロンプト...",
+        "addPreset": "プリセットを追加"
+      }
+    },
+    "interface": {
+      "title": "インターフェース設定",
+      "language": "システム言語",
+      "theme": "テーマカラー",
+      "reset": "デフォルトにリセット",
+      "presets": "プリセット",
+      "primaryColor": "プライマリカラー",
+      "backgroundColor": "背景色",
+      "chatBackground": "チャット背景",
+      "uploadDesc": "画像をアップロードしてチャット背景をカスタマイズします。",
+      "upload": "アップロード",
+      "remove": "削除",
+      "customCss": "カスタム吹き出しCSS",
+      "customCssDesc": "ターゲット .message-user または .message-ai"
+    },
+    "backup": {
+      "title": "データバックアップと復元",
+      "local": {
+        "title": "ローカル & iCloudバックアップ",
+        "description": "JSONファイルをダウンロードするか、ローカルバックアップから復元します",
+        "info": "データをJSONファイルとしてダウンロードします。<strong>iCloud同期</strong>の場合、ダウンロードしたファイルをiCloud Driveフォルダに保存するだけです。",
+        "download": "バックアップをダウンロード",
+        "restore": "ファイルから復元",
+        "restoreConfirm": "このバックアップを復元してもよろしいですか？現在のデータが上書きされます。",
+        "restoreSuccess": "復元に成功しました！ページをリロードします。",
+        "restoreError": "復元に失敗しました: 無効なファイル形式",
+        "downloadError": "バックアップの生成に失敗しました"
+      },
+      "github": {
+        "title": "GitHub Gist同期",
+        "description": "プライベートGitHub Gistにデータを同期",
+        "linked": "連携済み",
+        "pat": "パーソナルアクセストークン (PAT)",
+        "patHelp": "<code>gist</code>スコープが必要です。",
+        "getToken": "トークンを取得",
+        "gistId": "連携済みGist ID",
+        "unlink": "連携解除",
+        "autoBackup": "自動バックアップ",
+        "autoBackupHelp": "Gistに自動的に同期（毎時）",
+        "sync": "同期 (Push)",
+        "create": "バックアップを作成",
+        "import": "インポート (復元)",
+        "tokenRequired": "トークンが必要です",
+        "tokenAndGistRequired": "トークンとGist IDが必要です",
+        "restoreConfirm": "GitHubから復元してもよろしいですか？ローカルデータがGistの内容で上書きされます。",
+        "syncSuccess": "Gistに同期しました",
+        "restoreError": "復元に失敗しました: {{error}}"
+      },
+      "gdrive": {
+        "title": "Googleドライブ",
+        "description": "アクセストークン経由で直接アップロード",
+        "info": "推奨: <strong>ローカルバックアップ</strong>を使用し、セキュリティ向上のために手動でGoogleドライブフォルダにファイルを保存してください。",
+        "token": "OAuthアクセストークン (詳細)",
+        "upload": "ドライブにアップロード",
+        "success": "アップロードに成功しました！",
+        "error": "エラー: {{error}}"
+      },
+      "reset": {
+        "title": "全データをリセット",
+        "description": "すべてのローカルデータを完全に削除",
+        "warning": "<strong>警告:</strong> この操作により、このブラウザからすべての日記、チャット履歴、設定が削除されます。バックアップがない限り、この操作は取り消せません。",
+        "confirmBtn": "すべてリセットを確認",
+        "confirmAlert": "本当に削除しますか？この操作は取り消せません。"
+      }
+    }
+  },
+  "profile": {
+    "title": "パーソナルマニュアル",
+    "subtitle": "AIがあなたをよりよく理解するための詳細情報。",
+    "basicInfo": {
+      "yourName": "あなたの名前",
+      "nickname": "ニックネーム",
+      "identity": "アイデンティティ / 役割",
+      "identityPlaceholder": "例: 夢想家、エンジニア",
+      "birthday": "誕生日",
+      "residence": "居住地",
+      "residencePlaceholder": "都市、国",
+      "schoolWork": "学校 / 仕事",
+      "schoolWorkPlaceholder": "大学または会社",
+      "location": "場所 (職場/学校)",
+      "locationPlaceholder": "どこにありますか？"
+    },
+    "avatar": {
+      "upload": "写真をアップロード",
+      "link": "画像URL",
+      "change": "アバターを変更",
+      "linkTitle": "画像リンク"
+    },
+    "sections": {
+      "coreSelf": "コアセルフ",
+      "lifeExperience": "人生経験",
+      "currentFocus": "目標",
+      "interests": "興味",
+      "connections": "つながり"
+    },
+    "fields": {
+      "personality": "性格",
+      "personalityPlaceholder": "MBTI, エニアグラム...",
+      "values": "価値観",
+      "valuesPlaceholder": "最も大切にしていることは？",
+      "dislikes": "嫌いなもの",
+      "dislikesPlaceholder": "許せないこと..."
+    },
+    "timeline": {
+      "add": "マイルストーンを追加",
+      "yearPlaceholder": "年/時期",
+      "contentPlaceholder": "何が起きましたか？"
+    },
+    "focus": {
+      "add": "注力分野を追加",
+      "placeholder": "今集中していること..."
+    },
+    "interests": {
+      "add": "興味を追加..."
+    },
+    "connections": {
+      "add": "関係を追加",
+      "namePlaceholder": "名前",
+      "relationPlaceholder": "関係性",
+      "notePlaceholder": "その人についてのメモ..."
+    },
+    "pets": {
+      "title": "ペット",
+      "add": "ペットを追加",
+      "namePlaceholder": "ペットの名前",
+      "typePlaceholder": "種類 (猫、犬...)",
+      "notePlaceholder": "その子について..."
+    },
+    "save": {
+      "button": "変更を保存",
+      "saved": "保存しました",
+      "success": "プロフィールを更新しました！"
+    },
+    "common": {
+      "confirm": "確認",
+      "cancel": "キャンセル"
+    }
+  },
+  "write": {
+    "mood_placeholder": "今の気分は？",
+    "greeting_initial": "こんにちは！今日の気分はどうですか？",
+    "recording": "録音中",
+    "deleteSelected": "削除 ({{count}})",
+    "deleteConfirm": "{{count}} 件のメッセージを削除しますか？",
+    "generate": "日記を生成",
+    "generating": "生成中...",
+    "aiAssistant": "AIアシスタント",
+    "saving": "保存中...",
+    "save": "保存",
+    "futureDate": {
+      "title": "明日の謎が待っています",
+      "quote": "明日のことは明日に任せよう。",
+      "goBack": "戻る"
+    },
+    "chat": {
+      "placeholder": "メッセージを入力...",
+      "reply": "返信",
+      "uploadImage": "画像をアップロード",
+      "send": "メッセージを送信",
+      "cancelSelection": "選択をキャンセル",
+      "selectMessages": "メッセージを選択",
+      "copy": "コピー",
+      "edit": "編集",
+      "delete": "削除",
+      "regenerate": "再生成",
+      "mode": "チャットモード",
+      "manualMode": "手動モード"
+    },
+    "manual": {
+      "titlePlaceholder": "タイトル",
+      "category": "カテゴリー",
+      "tags": "タグ",
+      "contentPlaceholder": "書き始める..."
+    },
+    "generated": {
+      "title": "生成された日記",
+      "crafting": "日記を作成中...",
+      "titlePlaceholder": "日記のタイトル",
+      "reroll": "再生成",
+      "save": "日記に保存"
+    },
+    "categorySelector": {
+      "placeholder": "カテゴリーを選択または入力...",
+      "clear": "クリア",
+      "create": "\"{{value}}\" を作成",
+      "noCategories": "カテゴリーが見つかりません。"
+    },
+    "tagEditor": {
+      "placeholder": "タグを追加..."
+    },
+    "diffViewer": {
+      "noChanges": "変更は検出されませんでした。",
+      "back": "エディタに戻る",
+      "metadataChanges": "提案されたメタデータの変更",
+      "title": "タイトル",
+      "untitled": "(無題)",
+      "tags": "タグ",
+      "noTags": "(タグなし)",
+      "instructions": "ハイライトをクリックして承認/拒否を切り替え",
+      "added": "追加",
+      "removed": "削除",
+      "include": "クリックして含める",
+      "discard": "クリックして破棄",
+      "delete": "クリックして削除",
+      "restore": "クリックして復元",
+      "rejectAll": "すべて拒否",
+      "applySelected": "選択を適用"
+    },
+    "polish": {
+      "greeting": "こんにちは！私はあなたの執筆アシスタントです。日記の推敲、文法修正、改善提案をお手伝いします。お気軽に話しかけるか、「ワンクリック推敲」をクリックしてください！",
+      "error": "申し訳ありません、エラーが発生しました。もう一度お試しください。",
+      "errorReroll": "申し訳ありません、再生成中にエラーが発生しました。もう一度お試しください。",
+      "defaultName": "執筆アシスタント",
+      "title": "タイトル",
+      "tags": "タグ",
+      "content": "内容",
+      "polishedAvailable": "推敲されたテキストが利用可能です",
+      "compareApply": "比較して適用",
+      "reroll": "再生成",
+      "oneClick": "ワンクリック推敲",
+      "emotional": "感情的",
+      "grammar": "文法",
+      "placeholder": "変更を依頼..."
+    },
+    "moods": {
+      "happy": "ハッピー",
+      "excited": "ワクワク",
+      "neutral": "普通",
+      "sad": "悲しい",
+      "loved": "愛されている"
+    },
+    "alerts": {
+      "noHistory": "日記を生成するためのチャット履歴が{{date}}に見つかりません。",
+      "generateFailed": "日記の生成に失敗しました: {{error}}",
+      "uploadFailed": "画像のアップロードに失敗しました。",
+      "saveFailed": "日記の保存に失敗しました: {{error}}"
+    }
+  },
+  "timeline": {
+    "title": "タイムライン",
+    "select_date": "日付を選択",
+    "hide_calendar": "カレンダーを隠す",
+    "delete_title": "日記を削除",
+    "delete_confirm": "この日記を削除してもよろしいですか？この操作は取り消せません。",
+    "delete_button": "削除",
+    "years_ago_one": "{{count}} 年前",
+    "years_ago_other": "{{count}} 年前",
+    "read_memory": "思い出を読む",
+    "no_memories": "まだ思い出がありません。記録を始めましょう！"
+  },
+  "categories": {
+    "title": "本棚",
+    "manage": "管理",
+    "done": "完了",
+    "entries": "{{count}} 件のエントリー",
+    "edit_dialog": {
+      "edit_title": "カテゴリーを編集",
+      "add_title": "新しいカテゴリーを追加",
+      "name_label": "名前",
+      "name_placeholder": "カテゴリー名",
+      "cover_label": "カバー画像 (オプション)",
+      "change_image": "画像を変更",
+      "upload_image": "画像をアップロード",
+      "remove_image": "削除",
+      "recommendation": "推奨: 3:4 縦長画像",
+      "color_label": "色",
+      "cancel": "キャンセル",
+      "save": "変更を保存",
+      "create": "作成"
+    },
+    "delete_dialog": {
+      "title": "カテゴリーを削除",
+      "message": "\"{{name}}\" を削除してもよろしいですか？このカテゴリーの日記は残りますが、未分類になる可能性があります。",
+      "confirm": "削除"
+    },
+    "defaults": {
+      "Uncategorized": "未分類",
+      "Daily Life": "日常生活",
+      "Work": "仕事",
+      "Travel": "旅行"
+    },
+    "actions": {
+      "edit": "編集",
+      "delete": "削除"
+    },
+    "no_diaries": "このカテゴリーにはまだ日記がありません"
+  },
+  "diary_entry": {
+    "entry_count_one": "{{count}} 件のエントリー",
+    "entry_count_other": "{{count}} 件のエントリー",
+    "write_for_this_day": "この日の日記を書く",
+    "go_back": "戻る",
+    "add_new": "新規追加",
+    "no_entries": "{{date}} のエントリーは見つかりませんでした",
+    "back_to_timeline": "タイムラインに戻る",
+    "add_another_entry": "別のエントリーを追加"
+  },
+  "diary_item": {
+    "delete_diary_title": "日記を削除",
+    "delete_diary_message": "この日記を削除してもよろしいですか？この操作は取り消せません。",
+    "delete_comment_title": "コメントを削除",
+    "delete_comment_message": "このコメントを削除してもよろしいですか？この操作は取り消せません。",
+    "delete_chat_history_confirm": "チャット履歴を削除してもよろしいですか？この操作は取り消せません。",
+    "delete_chat_history_title": "チャット履歴を削除",
+    "title_placeholder": "タイトル",
+    "category_label": "カテゴリー",
+    "tags_label": "タグ",
+    "content_placeholder": "日記の内容を書く...",
+    "chat_history": "チャット履歴",
+    "messages_count": "{{count}} 件のメッセージ",
+    "comments": "コメント",
+    "ai_author": "AI ({{name}})",
+    "user_author": "あなた",
+    "no_comments": "コメントはまだありません。AIに感想を聞いてみませんか？",
+    "ask_ai": "AIにコメントを求める",
+    "add_comment_placeholder": "コメントを追加...",
+    "edit": "編集",
+    "save": "保存",
+    "delete_diary": "日記を削除",
+    "delete_comment": "コメントを削除"
+  }
+}

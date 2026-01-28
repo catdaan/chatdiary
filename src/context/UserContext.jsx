@@ -25,12 +25,12 @@ const DEFAULT_PROFILE = {
   valuesPositive: '',
   valuesNegative: '',
   lifeExperience: [], // Changed to array of { year, content }
-  shortTermGoals: '',
+  shortTermGoals: [], // Changed to array of strings
   
   // Connections & Interests
   coreRelationships: [], // Changed to array of { name, relation, note }
   interests: [], // Changed to array of strings
-  pets: ''
+  pets: [] // Changed to array of { name, type, note }
 };
 
 export const UserProvider = ({ children }) => {

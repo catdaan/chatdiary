@@ -1,0 +1,407 @@
+{
+  "nav": {
+    "write": "Write",
+    "calendar": "Calendar",
+    "categories": "Categories",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "select": "Select"
+  },
+  "layout": {
+    "title": "AI Diary",
+    "quote": "Every day is a new beginning.",
+    "aiAssistant": "AI Assistant",
+    "online": "Online"
+  },
+  "settings": {
+    "title": "Settings",
+    "api": {
+      "title": "API Configuration",
+      "configName": "Config Name",
+      "provider": "Provider",
+      "apiKey": "API Key",
+      "baseUrl": "Base URL",
+      "model": "Model",
+      "fetchModels": "Fetch Models",
+      "saveConfig": "Save Config",
+      "cancel": "Cancel",
+      "addNew": "Add New API Config",
+      "deleteConfirmTitle": "Delete Configuration?",
+      "deleteConfirmMessage": "This action cannot be undone. Are you sure you want to delete this API configuration?",
+      "delete": "Delete",
+      "pleaseEnterApiKey": "Please enter an API Key first.",
+      "failedToFetchModels": "Failed to fetch models: {{error}}",
+      "myApi": "e.g. My API",
+      "modelPlaceholder": "e.g. gpt-3.5-turbo"
+    },
+    "ai": {
+      "title": "AI Persona Settings",
+      "defaultPersona": {
+        "name": "Default",
+        "description": "User-centric, supportive friend who provides emotional value and casual guidance."
+      },
+      "newPersonaDesc": "A new custom AI persona",
+      "promptPlaceholder": "Describe how the AI should behave...",
+      "defaultSystemPromptHidden": "Default System Prompt (Hidden)",
+      "name": "Name",
+      "description": "Description",
+      "replyStyle": "Reply Style",
+      "customPrompt": "Custom Prompt",
+      "savePersona": "Save Persona",
+      "cancel": "Cancel",
+      "createNew": "Create New Persona",
+      "deleteConfirmTitle": "Delete Persona",
+      "deleteConfirmMessage": "Are you sure you want to delete this AI Persona? This action cannot be undone.",
+      "delete": "Delete",
+      "styles": {
+        "warm": "Warm & Supportive",
+        "analytical": "Analytical & Objective",
+        "concise": "Concise & Direct",
+        "humorous": "Humorous & Playful"
+      },
+      "globalStyle": {
+        "title": "Global Diary Generation Style",
+        "description": "This style will be applied to all AI-generated diaries, regardless of the active chat persona.",
+        "preset": "Style Preset",
+        "defaultPreset": "Default",
+        "wordCount": "Target Word Count",
+        "words": "words",
+        "withAiTrace": "With AI Trace",
+        "withAiTraceDesc": "Add AI commentary and analysis to the diary.",
+        "stylePrompt": "Style Prompt Instruction",
+        "editable": "(Editable)",
+        "newPresetTitle": "New Style Preset",
+        "presetNamePlaceholder": "Preset Name (e.g. Poetic)",
+        "stylePromptPlaceholder": "Style Instruction Prompt...",
+        "addPreset": "Add Preset"
+      }
+    },
+    "interface": {
+      "title": "Interface Settings",
+      "language": "System Language",
+      "theme": "Theme Colors",
+      "reset": "Reset Defaults",
+      "presets": "PRESETS",
+      "primaryColor": "Primary Color",
+      "backgroundColor": "Background Color",
+      "chatBackground": "Chat Background",
+      "uploadDesc": "Upload an image to personalize your chat background.",
+      "upload": "Upload",
+      "remove": "Remove",
+      "customCss": "Custom Bubble CSS",
+      "customCssDesc": "Target .message-user or .message-ai"
+    },
+    "backup": {
+      "title": "Data Backup & Restore",
+      "local": {
+        "title": "Local & iCloud Backup",
+        "description": "Download JSON file or restore from local backup",
+        "info": "Download your data as a JSON file. For <strong>iCloud Sync</strong>, simply save the downloaded file to your iCloud Drive folder.",
+        "download": "Download Backup",
+        "restore": "Restore from File",
+        "restoreConfirm": "Are you sure you want to restore this backup? This will OVERWRITE your current data.",
+        "restoreSuccess": "Restore successful! The page will now reload.",
+        "restoreError": "Failed to restore: Invalid file format",
+        "downloadError": "Failed to generate backup"
+      },
+      "github": {
+        "title": "GitHub Gist Sync",
+        "description": "Sync data to a private GitHub Gist",
+        "linked": "Linked",
+        "pat": "Personal Access Token (PAT)",
+        "patHelp": "Requires <code>gist</code> scope.",
+        "getToken": "Get Token",
+        "gistId": "Linked Gist ID",
+        "unlink": "Unlink",
+        "autoBackup": "Auto-Backup",
+        "autoBackupHelp": "Sync to Gist automatically (Every hour)",
+        "sync": "Sync (Push)",
+        "create": "Create Backup",
+        "import": "Import (Restore)",
+        "tokenRequired": "Token required",
+        "tokenAndGistRequired": "Token and Gist ID required",
+        "restoreConfirm": "Are you sure you want to restore from GitHub? This will OVERWRITE your local data with the Gist content.",
+        "syncSuccess": "Synced to Gist",
+        "restoreError": "Restore failed: {{error}}"
+      },
+      "gdrive": {
+        "title": "Google Drive",
+        "description": "Direct upload via Access Token",
+        "info": "Recommended: Use <strong>Local Backup</strong> and save the file to your Google Drive folder manually for better security.",
+        "token": "OAuth Access Token (Advanced)",
+        "upload": "Upload to Drive",
+        "success": "Uploaded successfully!",
+        "error": "Error: {{error}}"
+      },
+      "reset": {
+        "title": "Reset All Data",
+        "description": "Permanently delete all local data",
+        "warning": "<strong>Warning:</strong> This action will delete all your diaries, chat history, and settings from this browser. This action cannot be undone unless you have a backup.",
+        "confirmBtn": "Confirm Reset Everything",
+        "confirmAlert": "Are you absolutely sure? This cannot be undone."
+      }
+    }
+  },
+  "profile": {
+    "title": "Personal Manual",
+    "subtitle": "A deep dive into who you are, for better AI understanding.",
+    "basicInfo": {
+      "yourName": "Your Name",
+      "nickname": "Nickname",
+      "identity": "Identity / Role",
+      "identityPlaceholder": "e.g. Dreamer, Engineer",
+      "birthday": "Birthday",
+      "residence": "Residence",
+      "residencePlaceholder": "City, Country",
+      "schoolWork": "School / Work",
+      "schoolWorkPlaceholder": "University or Company",
+      "location": "Location (Work/School)",
+      "locationPlaceholder": "Where is it?"
+    },
+    "avatar": {
+      "upload": "Upload Photo",
+      "link": "Image URL",
+      "change": "Change Avatar",
+      "linkTitle": "Image Link"
+    },
+    "sections": {
+      "coreSelf": "Core Self",
+      "lifeExperience": "Life Experience",
+      "currentFocus": "Goals",
+      "interests": "Interests",
+      "connections": "Connections"
+    },
+    "fields": {
+      "personality": "Personality",
+      "personalityPlaceholder": "MBTI, Enneagram...",
+      "values": "Values",
+      "valuesPlaceholder": "What matters most?",
+      "dislikes": "Dislikes",
+      "dislikesPlaceholder": "Deal breakers..."
+    },
+    "timeline": {
+      "add": "Add Milestone",
+      "yearPlaceholder": "Year/Time",
+      "contentPlaceholder": "What happened?"
+    },
+    "focus": {
+      "add": "Add Focus Area",
+      "placeholder": "I'm focusing on..."
+    },
+    "interests": {
+      "add": "Add interest..."
+    },
+    "connections": {
+      "add": "Add Relationship",
+      "namePlaceholder": "Name",
+      "relationPlaceholder": "Relationship",
+      "notePlaceholder": "Notes about them..."
+    },
+    "pets": {
+      "title": "Pets",
+      "add": "Add Pet",
+      "namePlaceholder": "Pet Name",
+      "typePlaceholder": "Type (Cat, Dog...)",
+      "notePlaceholder": "About them..."
+    },
+    "save": {
+      "button": "Save Changes",
+      "saved": "Saved",
+      "success": "Profile updated successfully!"
+    },
+    "common": {
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    }
+  },
+  "write": {
+    "mood_placeholder": "How are you feeling now?",
+    "greeting_initial": "Hi there! How are you feeling today?",
+    "recording": "Recording",
+    "deleteSelected": "Delete ({{count}})",
+    "deleteConfirm": "Delete {{count}} messages?",
+    "generate": "Generate Diary",
+    "generating": "Generating...",
+    "aiAssistant": "AI Assistant",
+    "saving": "Saving...",
+    "save": "Save",
+    "futureDate": {
+      "title": "Tomorrow's mystery awaits",
+      "quote": "Leave tomorrow's things for tomorrow.",
+      "goBack": "Go Back"
+    },
+    "chat": {
+      "placeholder": "Type your message...",
+      "reply": "Reply",
+      "uploadImage": "Upload Image",
+      "send": "Send Message",
+      "cancelSelection": "Cancel Selection",
+      "selectMessages": "Select Messages",
+      "copy": "Copy",
+      "edit": "Edit",
+      "delete": "Delete",
+      "regenerate": "Regenerate",
+      "mode": "Chat Mode",
+      "manualMode": "Manual Mode"
+    },
+    "manual": {
+      "titlePlaceholder": "Title",
+      "category": "Category",
+      "tags": "Tags",
+      "contentPlaceholder": "Start writing..."
+    },
+    "generated": {
+      "title": "Generated Diary",
+      "crafting": "Crafting your diary...",
+      "titlePlaceholder": "Diary Title",
+      "reroll": "Re-roll",
+      "save": "Save to Diary"
+    },
+    "categorySelector": {
+      "placeholder": "Select or type category...",
+      "clear": "Clear",
+      "create": "Create \"{{value}}\"",
+      "noCategories": "No categories found."
+    },
+    "tagEditor": {
+      "placeholder": "Add tag..."
+    },
+    "diffViewer": {
+      "noChanges": "No changes detected.",
+      "back": "Back to Editor",
+      "metadataChanges": "Suggested Metadata Changes",
+      "title": "Title",
+      "untitled": "(Untitled)",
+      "tags": "Tags",
+      "noTags": "(No tags)",
+      "instructions": "Click highlights to toggle Accept/Reject",
+      "added": "Added",
+      "removed": "Removed",
+      "include": "Click to include",
+      "discard": "Click to discard",
+      "delete": "Click to delete",
+      "restore": "Click to restore",
+      "rejectAll": "Reject All",
+      "applySelected": "Apply Selected"
+    },
+    "polish": {
+      "greeting": "Hi! I'm your writing assistant. I can help you polish your diary, fix grammar, or suggest improvements. Just ask or click 'One-Click Polish'!",
+      "error": "Sorry, I encountered an error. Please try again.",
+      "errorReroll": "Sorry, I encountered an error during reroll. Please try again.",
+      "defaultName": "Writing Assistant",
+      "title": "Title",
+      "tags": "Tags",
+      "content": "Content",
+      "polishedAvailable": "Polished text available",
+      "compareApply": "Compare & Apply",
+      "reroll": "Reroll",
+      "oneClick": "One-Click Polish",
+      "emotional": "Emotional",
+      "grammar": "Grammar",
+      "placeholder": "Ask for changes..."
+    },
+    "moods": {
+      "happy": "Happy",
+      "excited": "Excited",
+      "neutral": "Neutral",
+      "sad": "Sad",
+      "loved": "Loved"
+    },
+    "alerts": {
+      "noHistory": "No chat history found for {{date}} to generate a diary.",
+      "generateFailed": "Failed to generate diary: {{error}}",
+      "uploadFailed": "Failed to upload image.",
+      "saveFailed": "Failed to save diary: {{error}}"
+    }
+  },
+  "timeline": {
+    "title": "Timeline",
+    "select_date": "Select Date",
+    "hide_calendar": "Hide Calendar",
+    "delete_title": "Delete Diary Entry",
+    "delete_confirm": "Are you sure you want to delete this diary entry? This action cannot be undone.",
+    "delete_button": "Delete",
+    "years_ago_one": "{{count}} Year Ago",
+    "years_ago_other": "{{count}} Years Ago",
+    "read_memory": "Read Memory",
+    "no_memories": "No memories yet. Start writing!"
+  },
+  "categories": {
+    "title": "Bookshelf",
+    "manage": "Manage",
+    "done": "Done",
+    "entries": "{{count}} entries",
+    "edit_dialog": {
+      "edit_title": "Edit Category",
+      "add_title": "Add New Category",
+      "name_label": "Name",
+      "name_placeholder": "Category Name",
+      "cover_label": "Cover Image (Optional)",
+      "change_image": "Change Image",
+      "upload_image": "Upload Image",
+      "remove_image": "Remove",
+      "recommendation": "Recommended: 3:4 portrait image",
+      "color_label": "Color",
+      "cancel": "Cancel",
+      "save": "Save Changes",
+      "create": "Create"
+    },
+    "delete_dialog": {
+      "title": "Delete Category",
+      "message": "Are you sure you want to delete \"{{name}}\"? Diaries in this category will remain but may become uncategorized.",
+      "confirm": "Delete"
+    },
+    "defaults": {
+      "Uncategorized": "Uncategorized",
+      "Daily Life": "Daily Life",
+      "Work": "Work",
+      "Travel": "Travel"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "no_diaries": "No diaries in this category yet"
+  },
+  "diary_entry": {
+    "entry_count_one": "{{count}} Entry",
+    "entry_count_other": "{{count}} Entries",
+    "write_for_this_day": "Write for this day",
+    "go_back": "Go back",
+    "add_new": "Add New",
+    "no_entries": "No entries found for {{date}}",
+    "back_to_timeline": "Back to Timeline",
+    "add_another_entry": "Add another entry"
+  },
+  "diary_item": {
+    "delete_diary_title": "Delete Diary Entry",
+    "delete_diary_message": "Are you sure you want to delete this diary entry? This action cannot be undone.",
+    "delete_comment_title": "Delete Comment",
+    "delete_comment_message": "Are you sure you want to delete this comment? This action cannot be undone.",
+    "delete_chat_history_confirm": "Are you sure you want to delete the chat history? This cannot be undone.",
+    "delete_chat_history_title": "Delete Chat History",
+    "title_placeholder": "Title",
+    "category_label": "Category",
+    "tags_label": "Tags",
+    "content_placeholder": "Write your diary content...",
+    "chat_history": "Chat History",
+    "messages_count": "{{count}} messages",
+    "comments": "Comments",
+    "ai_author": "AI ({{name}})",
+    "user_author": "You",
+    "no_comments": "No comments yet. Why not ask AI for some thoughts?",
+    "ask_ai": "Ask AI for comment",
+    "add_comment_placeholder": "Add a comment...",
+    "edit": "Edit",
+    "save": "Save",
+    "delete_diary": "Delete Diary",
+    "delete_comment": "Delete Comment"
+  }
+}

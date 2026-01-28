@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useDiary } from '../context/DiaryContext';
 import { format, parseISO } from 'date-fns';
+import { enUS, zhCN, zhTW, ja } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Calendar as CalendarIcon, CalendarDays, Trash2, Tag, Smile, Frown, Meh, Heart, Zap, Cat, Sparkles, Quote, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,16 +11,33 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { cn } from '../lib/utils';
 
 export default function TimelinePage() {
+  const { t, i18n } = useTranslation();
+  const localeMap = {
+    'en': enUS,
+    'en-US': enUS,
+    'zh': zhCN,
+    'zh-CN': zhCN,
+    'zh-TW': zhTW,
+    'ja': ja
+  };
+  const currentLocale = localeMap[i18n.language] || enUS;
+
   const { diaries, deleteDiary } = useDiary();
   const navigate = useNavigate();
   const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [diaryToDelete, setDiaryToDelete] = useState(null);
 
   // Group diaries by date
   const groupedDiaries = useMemo(() => {
+    // Filter by selected date if set
+    const filtered = selectedDate 
+      ? diaries.filter(d => d.date === selectedDate)
+      : diaries;
+
     // First sort all diaries
-    const sorted = [...diaries].sort((a, b) => {
+    const sorted = [...filtered].sort((a, b) => {
       const dateDiff = new Date(b.date) - new Date(a.date);
       if (dateDiff !== 0) return dateDiff;
       if (a.createdAt && b.createdAt) {
@@ -35,7 +54,7 @@ export default function TimelinePage() {
       groups[diary.date].push(diary);
       return groups;
     }, {});
-  }, [diaries]);
+  }, [diaries, selectedDate]);
 
   // Calculate Memories (On This Day in previous years)
   const memories = useMemo(() => {
@@ -90,22 +109,30 @@ export default function TimelinePage() {
     return map[category] || '!border-l-[#D1D5DB]'; // Default light grey
   };
 
+  const handleDateSelect = (date) => {
+    if (selectedDate === date) {
+      setSelectedDate(null);
+    } else {
+      setSelectedDate(date);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col">
       <ConfirmDialog 
         isOpen={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
-        title="Delete Diary Entry"
-        message="Are you sure you want to delete this diary entry? This action cannot be undone."
-        confirmText="Delete"
+        title={t('timeline.delete_title')}
+        message={t('timeline.delete_confirm')}
+        confirmText={t('timeline.delete_button')}
         isDangerous={true}
       />
 
       <div className="flex items-center justify-between mb-6 shrink-0">
         <h1 className="text-2xl font-bold text-cream-900 flex items-center gap-2">
           <CalendarIcon className="text-cream-900" />
-          Timeline
+          {t('timeline.title')}
         </h1>
         <button 
           onClick={() => setShowCalendar(!showCalendar)}
@@ -115,7 +142,7 @@ export default function TimelinePage() {
               ? "bg-cream-900 text-white shadow-md" 
               : "bg-white text-cream-900 shadow-sm border border-cream-100 hover:bg-cream-50"
           )}
-          title={showCalendar ? 'Hide Calendar' : 'Select Date'}
+          title={showCalendar ? t('timeline.hide_calendar') : t('timeline.select_date')}
         >
           <CalendarDays size={20} />
         </button>
@@ -189,7 +216,7 @@ export default function TimelinePage() {
 
         {Object.keys(groupedDiaries).length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-cream-900/40">
-            <p>No memories yet. Start writing!</p>
+            <p>{t('timeline.no_memories')}</p>
           </div>
         ) : (
           <div className="pb-12">
@@ -198,10 +225,10 @@ export default function TimelinePage() {
                 {/* Date Header */}
                 <div className="flex items-baseline gap-3 mb-6 ml-0">
                    <h2 className="text-3xl font-bold text-cream-900 tracking-tight">
-                     {format(parseISO(date), 'MMM d')}
+                     {format(parseISO(date), 'MMM d', { locale: currentLocale })}
                    </h2>
                    <span className="text-sm font-bold text-cream-400 uppercase tracking-widest">
-                     {format(parseISO(date), 'EEE')}
+                     {format(parseISO(date), 'EEE', { locale: currentLocale })}
                    </span>
                 </div>
 
@@ -252,7 +279,7 @@ export default function TimelinePage() {
                              {diary.mood && (
                                 <span className="px-2 py-0.5 bg-cream-50 text-cream-500 rounded-full text-xs border border-cream-100 flex items-center gap-1">
                                   {getMoodIcon(diary.mood)}
-                                  {diary.mood}
+                                  {t(`moods.${diary.mood.toLowerCase()}`, { defaultValue: diary.mood })}
                                 </span>
                              )}
                              {diary.category && (
@@ -272,7 +299,7 @@ export default function TimelinePage() {
                            <button
                              onClick={(e) => handleDeleteClick(e, diary.id)}
                              className="absolute top-4 right-4 p-2 text-cream-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
-                             title="Delete Diary"
+                             title={t('timeline.delete_title')}
                            >
                              <Trash2 size={16} />
                            </button>

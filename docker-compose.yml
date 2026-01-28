@@ -1,0 +1,7 @@
+services:
+  chatdairy:
+    build: .
+    container_name: chatdairy
+    ports:
+      - "8080:80"
+    restart: always

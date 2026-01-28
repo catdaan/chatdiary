@@ -8,6 +8,7 @@ import {
 import { useUser } from '../context/UserContext';
 import { compressImage } from '../utils/imageUtils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 // --- Sub-components ---
 
@@ -56,25 +57,27 @@ const SectionCard = ({ title, icon: Icon, children, className = "" }) => (
 const Divider = () => <div className="h-px bg-cream-200/60 my-2" />;
 
 // --- Timeline Editor ---
-const TimelineEditor = ({ items, onChange }) => {
+const TimelineEditor = ({ items, onChange, placeholderYear, placeholderContent, addText }) => {
+  const safeItems = Array.isArray(items) ? items : [];
+
   const addItem = () => {
-    onChange([...items, { year: '', content: '' }]);
+    onChange([...safeItems, { year: '', content: '' }]);
   };
 
   const removeItem = (index) => {
-    const newItems = items.filter((_, i) => i !== index);
+    const newItems = safeItems.filter((_, i) => i !== index);
     onChange(newItems);
   };
 
   const updateItem = (index, field, value) => {
-    const newItems = [...items];
+    const newItems = [...safeItems];
     newItems[index] = { ...newItems[index], [field]: value };
     onChange(newItems);
   };
 
   return (
     <div className="space-y-3">
-      {items.map((item, index) => (
+      {safeItems.map((item, index) => (
         <div key={index} className="flex gap-3 items-start group relative pl-4 border-l-2 border-cream-200">
           <div className="absolute -left-[5px] top-2 w-2 h-2 rounded-full bg-cream-300 ring-2 ring-white" />
           <div className="w-24 shrink-0">
@@ -82,7 +85,7 @@ const TimelineEditor = ({ items, onChange }) => {
               type="text"
               value={item.year}
               onChange={(e) => updateItem(index, 'year', e.target.value)}
-              placeholder="Year/Time"
+              placeholder={placeholderYear || "Year/Time"}
               className="w-full bg-transparent border-none p-0 text-cream-500 placeholder:text-cream-300 focus:ring-0 text-sm font-medium text-right"
             />
           </div>
@@ -90,7 +93,7 @@ const TimelineEditor = ({ items, onChange }) => {
              <textarea
               value={item.content}
               onChange={(e) => updateItem(index, 'content', e.target.value)}
-              placeholder="What happened?"
+              placeholder={placeholderContent || "What happened?"}
               rows={Math.max(1, (item.content?.match(/\n/g) || []).length + 1)}
               className="w-full bg-transparent border-none p-0 text-cream-900 placeholder:text-cream-300 focus:ring-0 resize-none text-sm leading-relaxed"
             />
@@ -101,14 +104,14 @@ const TimelineEditor = ({ items, onChange }) => {
         </div>
       ))}
       <button onClick={addItem} className="flex items-center gap-2 text-xs text-cream-400 hover:text-cream-600 transition-colors pl-4">
-        <Plus size={14} /> Add Milestone
+        <Plus size={14} /> {addText || "Add Milestone"}
       </button>
     </div>
   );
 };
 
 // --- Relationship Editor ---
-const RelationshipEditor = ({ items, onChange }) => {
+const RelationshipEditor = ({ items, onChange, placeholderName, placeholderRelation, placeholderNote, addText }) => {
   const addItem = () => {
     onChange([...items, { name: '', relation: '', note: '' }]);
   };
@@ -135,35 +138,35 @@ const RelationshipEditor = ({ items, onChange }) => {
               type="text"
               value={item.name}
               onChange={(e) => updateItem(index, 'name', e.target.value)}
-              placeholder="Name"
+              placeholder={placeholderName || "Name"}
               className="flex-1 bg-transparent border-b border-cream-200 focus:border-cream-400 p-1 text-cream-900 placeholder:text-cream-300 focus:ring-0 text-sm font-semibold"
             />
             <input
               type="text"
               value={item.relation}
               onChange={(e) => updateItem(index, 'relation', e.target.value)}
-              placeholder="Relationship"
+              placeholder={placeholderRelation || "Relationship"}
               className="w-1/3 bg-transparent border-b border-cream-200 focus:border-cream-400 p-1 text-cream-600 placeholder:text-cream-300 focus:ring-0 text-xs text-right"
             />
           </div>
           <textarea
             value={item.note}
             onChange={(e) => updateItem(index, 'note', e.target.value)}
-            placeholder="Notes about them..."
+            placeholder={placeholderNote || "Notes about them..."}
             rows={Math.max(1, (item.note?.match(/\n/g) || []).length + 1)}
             className="w-full bg-transparent border-none p-0 text-cream-700 placeholder:text-cream-300 focus:ring-0 resize-none text-xs leading-relaxed"
           />
         </div>
       ))}
       <button onClick={addItem} className="flex items-center gap-2 text-xs text-cream-400 hover:text-cream-600 transition-colors">
-        <Plus size={14} /> Add Relationship
+        <Plus size={14} /> {addText || "Add Relationship"}
       </button>
     </div>
   );
 };
 
 // --- Tag Editor ---
-const TagEditor = ({ tags, onChange }) => {
+const TagEditor = ({ tags, onChange, placeholder }) => {
   const [input, setInput] = useState('');
 
   const handleKeyDown = (e) => {
@@ -198,7 +201,7 @@ const TagEditor = ({ tags, onChange }) => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Add interest..."
+          placeholder={placeholder || "Add interest..."}
           className="w-full pl-5 bg-transparent border-none p-0 text-cream-900 placeholder:text-cream-300 focus:ring-0 text-sm"
         />
       </div>
@@ -208,24 +211,26 @@ const TagEditor = ({ tags, onChange }) => {
 
 
 // --- Pet Editor ---
-const PetEditor = ({ items, onChange }) => {
+const PetEditor = ({ items, onChange, placeholderName, placeholderType, placeholderNote, addText }) => {
+  const safeItems = Array.isArray(items) ? items : [];
+  
   const addItem = () => {
-    onChange([...items, { name: '', type: '', note: '' }]);
+    onChange([...safeItems, { name: '', type: '', note: '' }]);
   };
 
   const removeItem = (index) => {
-    onChange(items.filter((_, i) => i !== index));
+    onChange(safeItems.filter((_, i) => i !== index));
   };
 
   const updateItem = (index, field, value) => {
-    const newItems = [...items];
+    const newItems = [...safeItems];
     newItems[index] = { ...newItems[index], [field]: value };
     onChange(newItems);
   };
 
   return (
     <div className="space-y-4">
-      {items.map((item, index) => (
+      {safeItems.map((item, index) => (
         <div key={index} className="bg-cream-50/50 rounded-lg p-3 space-y-2 group relative">
            <button onClick={() => removeItem(index)} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-cream-300 hover:text-red-400 transition-all">
             <Trash2 size={14} />
@@ -235,35 +240,35 @@ const PetEditor = ({ items, onChange }) => {
               type="text"
               value={item.name}
               onChange={(e) => updateItem(index, 'name', e.target.value)}
-              placeholder="Pet Name"
+              placeholder={placeholderName || "Pet Name"}
               className="flex-1 bg-transparent border-b border-cream-200 focus:border-cream-400 p-1 text-cream-900 placeholder:text-cream-300 focus:ring-0 text-sm font-semibold"
             />
             <input
               type="text"
               value={item.type}
               onChange={(e) => updateItem(index, 'type', e.target.value)}
-              placeholder="Type (Cat, Dog...)"
+              placeholder={placeholderType || "Type (Cat, Dog...)"}
               className="w-1/3 bg-transparent border-b border-cream-200 focus:border-cream-400 p-1 text-cream-600 placeholder:text-cream-300 focus:ring-0 text-xs text-right"
             />
           </div>
           <textarea
             value={item.note}
             onChange={(e) => updateItem(index, 'note', e.target.value)}
-            placeholder="About them..."
+            placeholder={placeholderNote || "About them..."}
             rows={Math.max(1, (item.note?.match(/\n/g) || []).length + 1)}
             className="w-full bg-transparent border-none p-0 text-cream-700 placeholder:text-cream-300 focus:ring-0 resize-none text-xs leading-relaxed"
           />
         </div>
       ))}
       <button onClick={addItem} className="flex items-center gap-2 text-xs text-cream-400 hover:text-cream-600 transition-colors">
-        <Plus size={14} /> Add Pet
+        <Plus size={14} /> {addText || "Add Pet"}
       </button>
     </div>
   );
 };
 
 // --- Focus Editor ---
-const FocusEditor = ({ items, onChange }) => {
+const FocusEditor = ({ items, onChange, placeholder, addText }) => {
   const safeItems = Array.isArray(items) ? items : [];
   
   const addItem = () => {
@@ -289,7 +294,7 @@ const FocusEditor = ({ items, onChange }) => {
               type="text"
               value={item}
               onChange={(e) => updateItem(index, e.target.value)}
-              placeholder="I'm focusing on..."
+              placeholder={placeholder || "I'm focusing on..."}
               className="w-full bg-transparent border-none p-0 text-cream-900 placeholder:text-cream-300 focus:ring-0 text-sm"
             />
           </div>
@@ -302,7 +307,7 @@ const FocusEditor = ({ items, onChange }) => {
         </div>
       ))}
       <button onClick={addItem} className="flex items-center gap-2 text-xs text-cream-400 hover:text-cream-600 transition-colors">
-        <Plus size={14} /> Add Focus Area
+        <Plus size={14} /> {addText || "Add Focus Area"}
       </button>
     </div>
   );
@@ -310,6 +315,7 @@ const FocusEditor = ({ items, onChange }) => {
 
 const ProfilePage = () => {
   const { profile, updateProfile } = useUser();
+  const { t } = useTranslation();
   const [formData, setFormData] = useState(profile);
   const [isDirty, setIsDirty] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -406,7 +412,7 @@ const ProfilePage = () => {
                   {formData.avatar ? (
                     <img src={formData.avatar} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="text-4xl text-cream-400 font-serif">
+                    <div className="text-4xl text-cream-400">
                       {formData.username?.[0]?.toUpperCase() || <User size={40} />}
                     </div>
                   )}
@@ -439,7 +445,7 @@ const ProfilePage = () => {
                         }}
                       >
                         <Upload size={12} />
-                        Upload Photo
+                        {t('profile.avatar.upload')}
                       </button>
                       <button
                         type="button"
@@ -450,7 +456,7 @@ const ProfilePage = () => {
                         }}
                       >
                         <Link size={12} />
-                        Image URL
+                        {t('profile.avatar.link')}
                       </button>
                     </div>
                   )}
@@ -474,7 +480,7 @@ const ProfilePage = () => {
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     className="absolute z-50 top-[108px] left-0 right-0 mx-auto w-64 bg-white rounded-xl shadow-xl border border-cream-200 p-4"
                   >
-                    <h3 className="text-sm font-semibold text-cream-900 mb-2 text-left">Image Link</h3>
+                    <h3 className="text-sm font-semibold text-cream-900 mb-2 text-left">{t('profile.avatar.linkTitle')}</h3>
                     <input
                       type="text"
                       placeholder="https://example.com/image.png"
@@ -492,14 +498,14 @@ const ProfilePage = () => {
                         }}
                         className="px-3 py-1.5 text-xs font-medium text-cream-600 hover:text-cream-800 transition-colors"
                       >
-                        Cancel
+                        {t('profile.common.cancel')}
                       </button>
                       <button
                         type="button"
                         onClick={handleUrlSubmit}
                         className="px-3 py-1.5 text-xs font-medium bg-cream-900 text-white rounded-lg hover:bg-cream-800 transition-colors"
                       >
-                        Confirm
+                        {t('profile.common.confirm')}
                       </button>
                     </div>
                     {/* Arrow pointing up */}
@@ -514,15 +520,15 @@ const ProfilePage = () => {
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  placeholder="Your Name"
-                  className="w-full bg-transparent border-none p-0 text-3xl font-serif font-bold text-cream-900 placeholder:text-cream-300 focus:ring-0 text-center"
+                  placeholder={t('profile.basicInfo.yourName')}
+                  className="w-full bg-transparent border-none p-0 text-3xl font-bold text-cream-900 placeholder:text-cream-300 focus:ring-0 text-center"
                 />
                 <input
                   type="text"
                   name="nickname"
                   value={formData.nickname}
                   onChange={handleChange}
-                  placeholder="Nickname"
+                  placeholder={t('profile.basicInfo.nickname')}
                   className="w-full bg-transparent border-none p-0 text-lg text-cream-500 placeholder:text-cream-300 focus:ring-0 text-center"
                 />
               </div>
@@ -530,15 +536,15 @@ const ProfilePage = () => {
 
             {/* Basic Info */}
             <div className="space-y-2 px-2">
-              <NotionInput label="Identity / Role" icon={User} name="identity" value={formData.identity} onChange={handleChange} placeholder="e.g. Dreamer, Engineer" />
+              <NotionInput label={t('profile.basicInfo.identity')} icon={User} name="identity" value={formData.identity} onChange={handleChange} placeholder={t('profile.basicInfo.identityPlaceholder')} />
               <Divider />
-              <NotionInput label="Birthday" icon={Calendar} name="birthday" type="date" value={formData.birthday} onChange={handleChange} />
+              <NotionInput label={t('profile.basicInfo.birthday')} icon={Calendar} name="birthday" type="date" value={formData.birthday} onChange={handleChange} />
               <Divider />
-              <NotionInput label="Residence" icon={MapPin} name="residence" value={formData.residence} onChange={handleChange} placeholder="City, Country" />
+              <NotionInput label={t('profile.basicInfo.residence')} icon={MapPin} name="residence" value={formData.residence} onChange={handleChange} placeholder={t('profile.basicInfo.residencePlaceholder')} />
               <Divider />
-              <NotionInput label="School / Work" icon={Building2} name="schoolWork" value={formData.schoolWork} onChange={handleChange} placeholder="University or Company" />
+              <NotionInput label={t('profile.basicInfo.schoolWork')} icon={Building2} name="schoolWork" value={formData.schoolWork} onChange={handleChange} placeholder={t('profile.basicInfo.schoolWorkPlaceholder')} />
               <Divider />
-              <NotionInput label="Location (Work/School)" icon={Map} name="schoolWorkLocation" value={formData.schoolWorkLocation} onChange={handleChange} placeholder="Where is it?" />
+              <NotionInput label={t('profile.basicInfo.location')} icon={Map} name="schoolWorkLocation" value={formData.schoolWorkLocation} onChange={handleChange} placeholder={t('profile.basicInfo.locationPlaceholder')} />
             </div>
 
             {/* Save Button */}
@@ -553,7 +559,7 @@ const ProfilePage = () => {
               `}
             >
               <Save size={18} />
-              {isDirty ? 'Save Changes' : 'Saved'}
+              {isDirty ? t('profile.save.button') : t('profile.save.saved')}
             </button>
           </div>
         </aside>
@@ -561,46 +567,46 @@ const ProfilePage = () => {
         {/* Right Content */}
         <main className="flex-1 space-y-6">
           <header className="mb-8">
-            <h2 className="text-2xl font-serif font-bold text-cream-900">
-              Personal Manual
+            <h2 className="text-2xl font-bold text-cream-900">
+              {t('profile.title')}
             </h2>
-            <p className="text-cream-600 mt-1">A deep dive into who you are, for better AI understanding.</p>
+            <p className="text-cream-600 mt-1">{t('profile.subtitle')}</p>
           </header>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* 1. Core Self (Consolidated) */}
-            <SectionCard title="Core Self" icon={Zap} className="lg:col-span-2">
+            <SectionCard title={t('profile.sections.coreSelf')} icon={Zap} className="lg:col-span-2">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                  <div className="space-y-2">
-                    <h4 className="text-sm font-semibold text-cream-800 flex items-center gap-2"><Smile size={14}/> Personality</h4>
+                    <h4 className="text-sm font-semibold text-cream-800 flex items-center gap-2"><Smile size={14}/> {t('profile.fields.personality')}</h4>
                     <textarea
                       name="personality"
                       value={formData.personality}
                       onChange={handleChange}
-                      placeholder="MBTI, Enneagram..."
+                      placeholder={t('profile.fields.personalityPlaceholder')}
                       rows={4}
                       className="w-full bg-cream-50/50 rounded-lg border-none p-3 text-cream-900 placeholder:text-cream-300 focus:ring-1 focus:ring-cream-300 resize-none text-sm"
                     />
                  </div>
                  <div className="space-y-2">
-                    <h4 className="text-sm font-semibold text-cream-800 flex items-center gap-2"><Star size={14}/> Values</h4>
+                    <h4 className="text-sm font-semibold text-cream-800 flex items-center gap-2"><Star size={14}/> {t('profile.fields.values')}</h4>
                     <textarea
                       name="valuesPositive"
                       value={formData.valuesPositive}
                       onChange={handleChange}
-                      placeholder="What matters most?"
+                      placeholder={t('profile.fields.valuesPlaceholder')}
                       rows={4}
                       className="w-full bg-cream-50/50 rounded-lg border-none p-3 text-cream-900 placeholder:text-cream-300 focus:ring-1 focus:ring-cream-300 resize-none text-sm"
                     />
                  </div>
                  <div className="space-y-2">
-                    <h4 className="text-sm font-semibold text-cream-800 flex items-center gap-2"><ShieldAlert size={14}/> Dislikes</h4>
+                    <h4 className="text-sm font-semibold text-cream-800 flex items-center gap-2"><ShieldAlert size={14}/> {t('profile.fields.dislikes')}</h4>
                     <textarea
                       name="valuesNegative"
                       value={formData.valuesNegative}
                       onChange={handleChange}
-                      placeholder="Deal breakers..."
+                      placeholder={t('profile.fields.dislikesPlaceholder')}
                       rows={4}
                       className="w-full bg-cream-50/50 rounded-lg border-none p-3 text-cream-900 placeholder:text-cream-300 focus:ring-1 focus:ring-cream-300 resize-none text-sm"
                     />
@@ -609,10 +615,13 @@ const ProfilePage = () => {
             </SectionCard>
 
             {/* 2. Life Experience (Timeline) */}
-            <SectionCard title="Life Experience" icon={Book} className="lg:col-span-2">
+            <SectionCard title={t('profile.sections.lifeExperience')} icon={Book} className="lg:col-span-2">
               <TimelineEditor 
                 items={formData.lifeExperience} 
                 onChange={(newItems) => handleDirectChange('lifeExperience', newItems)} 
+                placeholderYear={t('profile.timeline.yearPlaceholder')}
+                placeholderContent={t('profile.timeline.contentPlaceholder')}
+                addText={t('profile.timeline.add')}
               />
             </SectionCard>
 
@@ -621,18 +630,21 @@ const ProfilePage = () => {
               {/* Left Column */}
               <div className="space-y-6">
                 {/* Goals */}
-                <SectionCard title="Current Focus" icon={Target}>
+                <SectionCard title={t('profile.sections.currentFocus')} icon={Target}>
                   <FocusEditor 
                     items={formData.shortTermGoals} 
                     onChange={(newItems) => handleDirectChange('shortTermGoals', newItems)} 
+                    placeholder={t('profile.focus.placeholder')}
+                    addText={t('profile.focus.add')}
                   />
                 </SectionCard>
 
                 {/* Interests (Tags) */}
-                <SectionCard title="Interests" icon={Smile}>
+                <SectionCard title={t('profile.sections.interests')} icon={Smile}>
                   <TagEditor 
                     tags={formData.interests} 
                     onChange={(newTags) => handleDirectChange('interests', newTags)} 
+                    placeholder={t('profile.interests.add')}
                   />
                 </SectionCard>
               </div>
@@ -640,19 +652,27 @@ const ProfilePage = () => {
               {/* Right Column */}
               <div className="h-full">
                 {/* Connections (Structured) */}
-                <SectionCard title="Connections" icon={Heart} className="h-full">
+                <SectionCard title={t('profile.sections.connections')} icon={Heart} className="h-full">
                   <RelationshipEditor 
                     items={formData.coreRelationships} 
                     onChange={(newItems) => handleDirectChange('coreRelationships', newItems)} 
+                    placeholderName={t('profile.connections.namePlaceholder')}
+                    placeholderRelation={t('profile.connections.relationPlaceholder')}
+                    placeholderNote={t('profile.connections.notePlaceholder')}
+                    addText={t('profile.connections.add')}
                   />
                   <div className="mt-4 pt-4 border-t border-cream-100">
                     <div className="flex items-center gap-2 text-cream-900 font-semibold mb-2">
                       <Cat size={18} className="text-cream-400" />
-                      <h4 className="text-sm">Pets</h4>
+                      <h4 className="text-sm">{t('profile.pets.title')}</h4>
                     </div>
                     <PetEditor 
                       items={formData.pets} 
                       onChange={(newItems) => handleDirectChange('pets', newItems)} 
+                      placeholderName={t('profile.pets.namePlaceholder')}
+                      placeholderType={t('profile.pets.typePlaceholder')}
+                      placeholderNote={t('profile.pets.notePlaceholder')}
+                      addText={t('profile.pets.add')}
                     />
                   </div>
                 </SectionCard>
@@ -672,7 +692,7 @@ const ProfilePage = () => {
             className="fixed bottom-8 right-8 z-50 bg-green-50 text-green-800 px-4 py-3 rounded-xl shadow-lg border border-green-200 flex items-center gap-2"
           >
             <div className="w-2 h-2 bg-green-500 rounded-full" />
-            Profile updated successfully!
+            {t('profile.save.success')}
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAI } from '../../context/AIContext';
-import { ArrowRight, MessageCircle, Sparkles, X } from 'lucide-react';
+import { MessageCircle, Sparkles, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import AISettings from '../settings/AISettings';
@@ -83,12 +83,19 @@ export default function ChatSidebar() {
       <div className="p-4 bg-white border-t border-cream-200">
         <div className="relative">
           <input 
+            ref={inputRef}
             type="text" 
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !isComposing) {
+                handleSend();
+              }
+            }}
             placeholder="Type your message..." 
-            className="w-full pl-4 pr-20 py-3 bg-cream-50 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cream-200 text-sm transition-all"
+            className="w-full pl-4 pr-24 py-3 bg-cream-50 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cream-200 text-sm transition-all"
           />
           
           <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -98,7 +105,7 @@ export default function ChatSidebar() {
               className="p-1.5 text-cream-400 hover:text-cream-900 hover:bg-cream-200 rounded-lg transition-all disabled:opacity-50"
               title="Send"
             >
-              <ArrowRight size={18} />
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-circle" aria-hidden="true"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path></svg>
             </button>
             <button 
               onClick={handleTriggerAI}

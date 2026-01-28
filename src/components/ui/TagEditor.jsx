@@ -1,7 +1,9 @@
 import React from 'react';
 import { Tag, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const TagEditor = ({ tags, setTags, inputValue, setInputValue }) => {
+  const { t } = useTranslation();
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -34,7 +36,7 @@ export const TagEditor = ({ tags, setTags, inputValue, setInputValue }) => {
            value={inputValue}
            onChange={(e) => setInputValue(e.target.value)}
            onKeyDown={handleKeyDown}
-           placeholder="Add tag..."
+           placeholder={t('write.tagEditor.placeholder')}
            className="pl-7 pr-2 py-1 bg-transparent border-none outline-none text-sm text-cream-900 placeholder:text-cream-400 w-24 focus:w-32 transition-all"
          />
       </div>

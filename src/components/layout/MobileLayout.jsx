@@ -18,8 +18,8 @@ export default function MobileLayout() {
   const { isRightSidebarOpen, toggleRightSidebar } = useLayout();
 
   return (
-    <div className="flex flex-col h-screen bg-diary-bg text-cream-900 font-sans relative overflow-hidden">
-      <main className="flex-1 overflow-y-auto pb-28 px-4 pt-4">
+    <div className="flex flex-col h-[100dvh] bg-diary-bg text-cream-900 font-sans relative overflow-hidden supports-[height:100dvh]:h-[100dvh]">
+      <main className="flex-1 overflow-y-auto pb-[calc(7rem+env(safe-area-inset-bottom))] px-4 pt-[calc(1rem+env(safe-area-inset-top))] scroll-smooth">
         <Outlet />
       </main>
 

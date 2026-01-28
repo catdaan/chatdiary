@@ -4,15 +4,9 @@ import { motion } from 'framer-motion';
 import { Calendar, BookOpen, PenTool, History, Settings, MessageCircle, Menu, PanelRightClose, PanelRightOpen, GripVertical, User } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLayout } from './LayoutContext';
+import { useTheme } from '../../context/ThemeContext';
 import MiniCalendar from '../ui/MiniCalendar';
 import ChatSidebar from '../chat/ChatSidebar';
-
-  const NAV_ITEMS = [
-    { path: '/categories', icon: BookOpen, label: 'Categories' },
-    { path: `/write?date=${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`, icon: PenTool, label: 'Write' },
-    { path: '/profile', icon: User, label: 'Profile' },
-    { path: '/settings', icon: Settings, label: 'Settings' },
-  ];
 
 export default function DesktopLayout() {
   const { 
@@ -23,6 +17,15 @@ export default function DesktopLayout() {
     rightSidebarWidth,
     setRightSidebarWidth
   } = useLayout();
+
+  const { t } = useTheme();
+
+  const NAV_ITEMS = [
+    { path: '/categories', icon: BookOpen, label: t('nav.categories') },
+    { path: `/write?date=${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`, icon: PenTool, label: t('nav.write') },
+    { path: '/profile', icon: User, label: t('nav.profile') },
+    { path: '/settings', icon: Settings, label: t('nav.settings') },
+  ];
 
   const isResizingRef = useRef(false);
   const sidebarRef = useRef(null);
@@ -80,7 +83,7 @@ export default function DesktopLayout() {
             animate={{ opacity: isSidebarCollapsed ? 0 : 1, width: isSidebarCollapsed ? 0 : 'auto' }}
             className="text-xl font-bold text-cream-900 whitespace-nowrap overflow-hidden"
           >
-            AI Diary
+            {t('layout.title')}
           </motion.span>
         </div>
 
@@ -111,36 +114,35 @@ export default function DesktopLayout() {
               >
                 <Calendar size={20} />
                 <div className="absolute left-full ml-2 px-2 py-1 bg-cream-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
-                  Calendar
+                  {t('nav.calendar')}
                 </div>
               </NavLink>
             )}
           </div>
           
-          <nav className="space-y-2 mb-6">
+          {/* Nav Items */}
+          <nav className="space-y-2">
             {NAV_ITEMS.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) => cn(
-                  "flex items-center rounded-xl transition-all group relative",
-                  isSidebarCollapsed ? "justify-center py-3 px-0" : "gap-3 px-3 py-3",
+                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative",
                   isActive 
-                    ? "bg-white text-cream-900 font-medium shadow-sm border border-cream-100" 
-                    : "text-cream-900/60 hover:bg-cream-50 hover:text-cream-900"
+                    ? "bg-cream-900 text-white shadow-md" 
+                    : "text-cream-600 hover:bg-cream-100 hover:text-cream-900",
+                  isSidebarCollapsed && "justify-center px-2"
                 )}
               >
-                <item.icon size={20} className="shrink-0" />
-                <motion.span 
-                  animate={{ opacity: isSidebarCollapsed ? 0 : 1, width: isSidebarCollapsed ? 0 : 'auto' }}
-                  className="whitespace-nowrap overflow-hidden origin-left"
-                >
-                  {item.label}
-                </motion.span>
+                <item.icon size={20} strokeWidth={2} />
                 
+                {!isSidebarCollapsed && (
+                  <span className="font-medium">{item.label}</span>
+                )}
+
                 {/* Tooltip for collapsed state */}
                 {isSidebarCollapsed && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-cream-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                  <div className="absolute left-full ml-2 px-2 py-1 bg-cream-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
                     {item.label}
                   </div>
                 )}
@@ -158,7 +160,7 @@ export default function DesktopLayout() {
               className="bg-cream-100/50 rounded-xl p-4 text-center"
             >
               <p className="text-xs text-cream-900/60 italic font-serif">
-                "Every day is a new beginning."
+                "{t('layout.quote')}"
               </p>
             </motion.div>
           )}
@@ -191,19 +193,17 @@ export default function DesktopLayout() {
           <div className="p-4 border-b border-cream-200 flex items-center justify-between bg-white/50 backdrop-blur-sm">
             <h2 className="font-semibold flex items-center gap-2 text-cream-900">
               <MessageCircle size={18} />
-              AI Assistant
+              {t('layout.aiAssistant')}
             </h2>
             <div className="flex items-center gap-2">
-               <span className="text-[10px] px-2 py-0.5 bg-green-100 text-green-700 rounded-full border border-green-200">Online</span>
+               <span className="text-[10px] px-2 py-0.5 bg-green-100 text-green-700 rounded-full border border-green-200">{t('layout.online')}</span>
                <button onClick={toggleRightSidebar} className="p-1 hover:bg-cream-100 rounded-md text-cream-900/50 hover:text-cream-900 transition-colors">
                  <PanelRightClose size={16} />
                </button>
             </div>
           </div>
           
-          <div className="flex-1 overflow-hidden bg-cream-50/50">
-             <ChatSidebar />
-          </div>
+          <ChatSidebar />
         </aside>
       )}
     </div>

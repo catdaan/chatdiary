@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { useLayout } from '../components/layout/LayoutContext';
+import { useTheme } from '../context/ThemeContext';
 import { useDiary } from '../context/DiaryContext';
 import { useAI } from '../context/AIContext';
 import { 
@@ -13,7 +14,9 @@ import {
 import { cn, compressImage } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
+import { enUS, zhCN, zhTW } from 'date-fns/locale';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AISettings from '../components/settings/AISettings';
 import { TagEditor } from '../components/ui/TagEditor';
 import { CategorySelector } from '../components/ui/CategorySelector';
@@ -22,8 +25,20 @@ import { DiffViewer } from '../components/ui/DiffViewer';
 import AIPolishAssistant from '../components/chat/AIPolishAssistant';
 
 export default function WritePage() {
+  const { i18n } = useTranslation();
   const [mode, setMode] = useState('chat');
   const { setRightSidebarOpen } = useLayout();
+  const { theme, t } = useTheme();
+  
+  const localeMap = {
+    'en': enUS,
+    'en-US': enUS,
+    'zh': zhCN,
+    'zh-CN': zhCN,
+    'zh-TW': zhTW
+  };
+  const currentLocale = localeMap[i18n.language] || enUS;
+
   const [searchParams] = useSearchParams();
   const dateParam = searchParams.get('date');
   const modeParam = searchParams.get('mode');
@@ -57,7 +72,7 @@ export default function WritePage() {
     }
   }, [modeParam]);
 
-  const { addDiary, diaries } = useDiary();
+  const { addDiary, diaries, customCategories, addCategory } = useDiary();
   const navigate = useNavigate();
   const [inputValue, setInputValue] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -65,6 +80,7 @@ export default function WritePage() {
   // Selection Mode State
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedMessageIds, setSelectedMessageIds] = useState(new Set());
+  const [activeMessageId, setActiveMessageId] = useState(null); // For mobile: tap to show actions
   
   // Editing State
   const [editingMessageId, setEditingMessageId] = useState(null);
@@ -88,7 +104,7 @@ export default function WritePage() {
 
   const handleDeleteSelected = () => {
     if (selectedMessageIds.size === 0) return;
-    if (window.confirm(`Delete ${selectedMessageIds.size} messages?`)) {
+    if (window.confirm(t('write.deleteConfirm', { count: selectedMessageIds.size }))) {
         deleteMessages(Array.from(selectedMessageIds));
         setIsSelectionMode(false);
         setSelectedMessageIds(new Set());
@@ -130,6 +146,12 @@ export default function WritePage() {
   // AI Assistant State
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [assistantMessages, setAssistantMessages] = useState([]);
+
+
+  // Diary Reroll Popup State
+  const [isDiaryRerollPopupOpen, setIsDiaryRerollPopupOpen] = useState(false);
+  const [diaryRerollInstruction, setDiaryRerollInstruction] = useState('');
+
   const [diffMode, setDiffMode] = useState(false);
   const [originalContent, setOriginalContent] = useState('');
   const [polishedContent, setPolishedContent] = useState('');
@@ -248,6 +270,8 @@ export default function WritePage() {
   
   // Diary Generation State
   const fileInputRef = useRef(null);
+  const textInputRef = useRef(null);
+  const [isComposing, setIsComposing] = useState(false);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -258,7 +282,7 @@ export default function WritePage() {
       sendMessage('', { type: 'image', url: compressedDataUrl });
     } catch (error) {
       console.error("Image upload failed:", error);
-      alert("Failed to upload image.");
+      alert(t('write.alerts.uploadFailed'));
     } finally {
       // Reset input so same file can be selected again if needed
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -293,11 +317,9 @@ export default function WritePage() {
 
   // Calculate existing categories
   const existingCategories = useMemo(() => {
-    return [...new Set(diaries.map(d => d.category).filter(Boolean))];
-  }, [diaries]);
+    return customCategories.map(c => c.name);
+  }, [customCategories]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [diaryStyle, setDiaryStyle] = useState('no_ai_trace'); // 'no_ai_trace' or 'with_ai_trace'
-  const [showGenerateOptions, setShowGenerateOptions] = useState(false);
 
   // Sync Right Sidebar with Mode
   useEffect(() => {
@@ -316,6 +338,9 @@ export default function WritePage() {
   }, [setRightSidebarOpen]);
 
   const shouldShowTimestamp = (currentMsg, prevMsg) => {
+    // Hide timestamp for the default greeting message (id 1)
+    if (currentMsg.id === 1 || currentMsg.id === '1') return false;
+
     if (!prevMsg) return true;
     // Assuming msg.id is a timestamp (Date.now())
     const timeDiff = currentMsg.id - prevMsg.id;
@@ -327,15 +352,19 @@ export default function WritePage() {
      // If today, show time only. If not today, show date + time
      const now = new Date();
      if (date.toDateString() === now.toDateString()) {
-         return format(date, 'h:mm a');
+         return format(date, 'p', { locale: currentLocale });
      }
-     return format(date, 'MMM d, h:mm a');
+     return format(date, 'MMM d, p', { locale: currentLocale });
   };
 
   const handleSendMessage = () => {
     if (!inputValue.trim()) return;
     sendMessage(inputValue);
     setInputValue('');
+    // Fix for iOS voice input ghost text
+    if (textInputRef.current) {
+      textInputRef.current.value = '';
+    }
   };
 
   const handleTriggerAI = async () => {
@@ -343,22 +372,29 @@ export default function WritePage() {
     await triggerAIResponse();
   };
 
-  const handleGenerateDiary = async (style) => {
-    setDiaryStyle(style);
-    setShowGenerateOptions(false);
+  const handleGenerateDiary = async (instruction = '') => {
     setIsGenerating(true);
     try {
-      // Filter messages to only include today's chat history
-      const todayStr = new Date().toDateString();
-      const todaysMessages = messages.filter(msg => new Date(msg.id).toDateString() === todayStr);
+      // Filter messages to only include valid chat history
+      // We trust that 'messages' already contains the correct context for the activeDate
+      // (loaded from localStorage key specific to activeDate)
+      const todaysMessages = messages.filter(msg => {
+            // Skip default greeting
+            if (msg.id === 1 || msg.id === '1') return false;
+            // Ensure it's a valid message
+            if (!msg.text && !msg.attachment) return false;
+            return true;
+      });
 
       if (todaysMessages.length === 0) {
-        alert("No chat history found for today to generate a diary.");
+        // Fallback: If no real messages, but we are here, maybe just warn?
+        // But if user wants to generate, they usually have content.
+        alert(t('write.alerts.noHistory', { date: activeDate || 'today' }));
         setIsGenerating(false);
         return;
       }
 
-      const result = await generateDiary(todaysMessages, style);
+      const result = await generateDiary(todaysMessages, instruction);
       if (typeof result === 'object') {
         setGeneratedDiary(result.content);
         setGeneratedMood(result.mood?.toLowerCase() || 'neutral');
@@ -374,7 +410,7 @@ export default function WritePage() {
       }
     } catch (error) {
       console.error("Generation failed:", error);
-      alert("Failed to generate diary. Please check your API settings.");
+      alert(t('write.alerts.generateFailed', { error: error.message }));
     } finally {
       setIsGenerating(false);
     }
@@ -387,6 +423,21 @@ export default function WritePage() {
         // Use activeDate
         const dateStr = activeDate || format(new Date(), 'yyyy-MM-dd');
         
+        // Auto-add category if new
+        if (generatedCategory && !customCategories.some(c => c.name === generatedCategory)) {
+            addCategory(generatedCategory);
+        }
+
+        // Filter messages to only include valid messages
+        // We trust 'messages' state contains the correct context for this date
+        const relevantMessages = messages.filter(msg => {
+            // Skip default greeting
+            if (msg.id === 1 || msg.id === '1') return false;
+             // Ensure it's a valid message
+             if (!msg.text && !msg.attachment) return false;
+            return true;
+        });
+
         addDiary({
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
           date: dateStr,
@@ -399,14 +450,19 @@ export default function WritePage() {
           ai_briefing: generatedBriefing,
           // Don't save full chat history with images in the diaries array to save space
           // The chat history is already preserved in chat_messages storage
-          chatHistory: messages.map(m => ({
+          chatHistory: relevantMessages.map(m => ({
             id: m.id,
             text: m.text,
             sender: m.sender,
-            timestamp: m.timestamp,
+            // Use timestamp or fallback to ID (if numeric) or parse ID
+            timestamp: m.timestamp || (typeof m.id === 'number' ? m.id : parseInt(m.id)),
             // Exclude attachment to save space
           })) 
         });
+        
+        // DO NOT CLEAR MESSAGES HERE
+        // The chat history should be preserved for the date.
+        // Clearing setGeneratedDiary is fine as it's just the preview state.
         
         setGeneratedDiary(null); // Close preview
         setGeneratedMood('neutral');
@@ -419,7 +475,7 @@ export default function WritePage() {
         navigate(`/date/${dateStr}`);
       } catch (error) {
         console.error("Error in handleSaveDiary:", error);
-        alert("Failed to save diary: " + error.message);
+        alert(t('write.alerts.saveFailed', { error: error.message }));
       }
     }
   };
@@ -429,6 +485,11 @@ export default function WritePage() {
     
     setIsSaving(true);
     
+    // Auto-add category if new
+    if (manualCategory && !customCategories.some(c => c.name === manualCategory)) {
+        addCategory(manualCategory);
+    }
+
     // Generate Briefing for Manual Entry
     let briefing = null;
     try {
@@ -467,7 +528,7 @@ export default function WritePage() {
         navigate(`/date/${dateStr}`);
     } catch (error) {
         console.error("Failed to save diary:", error);
-        alert("Failed to save diary. Please try again.");
+        alert(t('write.alerts.saveFailed', { error: 'Please try again' }));
         setIsSaving(false);
     }
   };
@@ -487,17 +548,17 @@ export default function WritePage() {
             <Calendar size={32} />
           </div>
           <h2 className="text-xl font-serif font-medium text-cream-900 mb-2">
-            Tomorrow's mystery awaits
+            {t('write.futureDate.title')}
           </h2>
           <p className="text-cream-600 mb-8 font-light italic">
-            "明天的事情留给明天的自己"
+            "{t('write.futureDate.quote')}"
           </p>
           <button
             onClick={() => navigate('/calendar')}
             className="px-6 py-2.5 bg-cream-900 text-white rounded-lg hover:bg-cream-800 transition-colors text-sm font-medium flex items-center gap-2 mx-auto shadow-sm"
           >
             <ArrowLeft size={16} />
-            Go Back
+            {t('write.futureDate.goBack')}
           </button>
         </div>
       </div>
@@ -508,7 +569,7 @@ export default function WritePage() {
     <div className="flex h-full relative">
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Header */}
-        <div className="h-16 flex items-center justify-between px-6 shrink-0 relative z-30">
+        <div className="h-16 flex items-center justify-between px-6 shrink-0 relative z-30 sticky top-0 bg-[#FDFBF7]/90 backdrop-blur-sm">
           <div className="flex items-center gap-4">
             
             <div className="flex bg-cream-100/50 p-1 rounded-xl">
@@ -518,7 +579,7 @@ export default function WritePage() {
               "p-2 rounded-md transition-all flex items-center justify-center",
               mode === 'chat' ? "bg-white text-cream-900 shadow-sm" : "text-cream-900/60 hover:text-cream-900 hover:bg-white/50"
             )}
-            title="Chat Mode"
+            title={t('write.chat.mode')}
           >
             <MessageCircle size={18} />
           </button>
@@ -528,7 +589,7 @@ export default function WritePage() {
               "p-2 rounded-md transition-all flex items-center justify-center",
               mode === 'manual' ? "bg-white text-cream-900 shadow-sm" : "text-cream-900/60 hover:text-cream-900 hover:bg-white/50"
             )}
-            title="Manual Mode"
+            title={t('write.chat.manualMode')}
           >
             <PenTool size={18} />
           </button>
@@ -540,7 +601,7 @@ export default function WritePage() {
             <div className="px-3 py-1 bg-cream-100 rounded-lg border border-cream-200 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                 <span className="text-xs font-semibold text-cream-700 uppercase tracking-wide">
-                  Recording: {activeDate ? format(parseISO(activeDate), 'MMM do, yyyy') : format(new Date(), 'MMM do, yyyy')}
+                  {t('write.recording')}: {activeDate ? format(parseISO(activeDate), 'PP', { locale: currentLocale }) : format(new Date(), 'PP', { locale: currentLocale })}
                 </span>
             </div>
         </div>
@@ -554,7 +615,7 @@ export default function WritePage() {
                   "p-2 rounded-lg transition-all border border-cream-200 shadow-sm flex items-center justify-center",
                   isSelectionMode ? "bg-cream-900 text-white" : "bg-white text-cream-900 hover:bg-cream-50"
                 )}
-                title={isSelectionMode ? "Cancel Selection" : "Select Messages"}
+                title={isSelectionMode ? t('write.chat.cancelSelection') : t('write.chat.selectMessages')}
               >
                 <CheckSquare size={18} />
               </button>
@@ -569,51 +630,27 @@ export default function WritePage() {
                           className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center gap-2 font-medium text-sm border border-red-200"
                       >
                           <Trash2 size={16} />
-                          <span>Delete ({selectedMessageIds.size})</span>
+                          <span>{t('write.deleteSelected', { count: selectedMessageIds.size })}</span>
                       </motion.button>
                   )}
               </AnimatePresence>
 
-             <div className="relative">
                 <button 
-                  onClick={() => setShowGenerateOptions(!showGenerateOptions)}
+                  onClick={() => handleGenerateDiary()}
+                  disabled={isGenerating}
                   className={cn(
                     "px-3 py-2 rounded-lg transition-all border border-cream-200 shadow-sm flex items-center gap-2 font-medium text-sm",
-                    showGenerateOptions ? "bg-cream-100 text-amber-500" : "bg-white text-cream-900 hover:text-amber-500 hover:bg-cream-50"
+                    isGenerating ? "bg-cream-100 text-cream-400" : "bg-white text-cream-900 hover:text-amber-500 hover:bg-cream-50"
                   )}
-                  title="Generate Diary"
+                  title={t('write.generate')}
                 >
-                  <Sparkles size={16} />
-                  <span className="hidden sm:inline">Generate Diary</span>
-                </button>
-                <AnimatePresence>
-                  {showGenerateOptions && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                      className="absolute top-full mt-2 right-0 bg-white border border-cream-200 rounded-xl shadow-xl p-2 z-20 flex flex-col gap-1 w-48"
-                    >
-                      <button 
-                        onClick={() => handleGenerateDiary('no_ai_trace')}
-                        disabled={isGenerating}
-                        className="text-left px-3 py-2 text-sm font-medium text-cream-900 hover:bg-cream-50 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Book size={16} className="text-cream-500" />
-                        Without AI Trace
-                      </button>
-                      <button 
-                        onClick={() => handleGenerateDiary('with_ai_trace')}
-                        disabled={isGenerating}
-                        className="text-left px-3 py-2 text-sm font-medium text-cream-900 hover:bg-cream-50 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <MessageCircle size={16} className="text-cream-500" />
-                        With AI Trace
-                      </button>
-                    </motion.div>
+                  {isGenerating ? (
+                    <div className="w-4 h-4 border-2 border-cream-400 border-t-cream-900 rounded-full animate-spin"></div>
+                  ) : (
+                    <Sparkles size={16} />
                   )}
-                </AnimatePresence>
-             </div>
+                  <span className="hidden sm:inline">{isGenerating ? t('write.generating') : t('write.generate')}</span>
+                </button>
              </>
           )}
 
@@ -629,7 +666,7 @@ export default function WritePage() {
                 )}
               >
                   <Wand2 size={16} />
-                  <span className="hidden sm:inline">AI Assistant</span>
+                  <span className="hidden sm:inline">{t('write.aiAssistant')}</span>
               </button>
               <button 
                 onClick={handleSaveManualDiary}
@@ -639,12 +676,12 @@ export default function WritePage() {
                   {isSaving ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <span className="hidden sm:inline">Saving...</span>
+                      <span className="hidden sm:inline">{t('write.saving')}</span>
                     </>
                   ) : (
                     <>
                       <Save size={16} />
-                      <span className="hidden sm:inline">Save</span>
+                      <span className="hidden sm:inline">{t('write.save')}</span>
                     </>
                   )}
               </button>
@@ -662,7 +699,14 @@ export default function WritePage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="h-full flex flex-col bg-cream-50/50 rounded-2xl border border-white/60 shadow-inner overflow-hidden relative"
+              className="h-full flex flex-col rounded-2xl border border-white/60 shadow-inner overflow-hidden relative"
+              style={{
+                backgroundColor: theme.chatBgImage ? 'transparent' : 'rgba(253, 251, 247, 0.5)',
+                backgroundImage: theme.chatBgImage ? `url(${theme.chatBgImage})` : undefined,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
             >
               {/* Sticky Persona Indicator - Transparent */}
               <div className="px-4 py-2 flex justify-center z-10 sticky top-0 pointer-events-none">
@@ -732,13 +776,15 @@ export default function WritePage() {
                                 autoFocus
                               />
                               <div className="flex justify-end gap-2 mt-2">
-                                <button onClick={cancelEdit} className="px-3 py-1.5 text-sm text-cream-600 hover:bg-cream-50 rounded-lg">Cancel</button>
-                                <button onClick={saveEdit} className="px-3 py-1.5 text-sm bg-cream-900 text-white rounded-lg hover:bg-cream-800">Save</button>
+                                <button onClick={cancelEdit} className="px-3 py-1.5 text-sm text-cream-600 hover:bg-cream-50 rounded-lg">{t('common.cancel')}</button>
+                                <button onClick={saveEdit} className="px-3 py-1.5 text-sm bg-cream-900 text-white rounded-lg hover:bg-cream-800">{t('common.save')}</button>
                               </div>
                            </div>
                         ) : (
-                           <div className={cn(
-                              "max-w-[80%] p-4 rounded-2xl text-lg leading-relaxed shadow-sm relative transition-all",
+                           <div 
+                              onClick={() => !isSelectionMode && setActiveMessageId(activeMessageId === msg.id ? null : msg.id)}
+                              className={cn(
+                              "max-w-[80%] p-4 rounded-2xl text-lg leading-relaxed shadow-sm relative transition-all cursor-pointer",
                               msg.sender === 'user' 
                                 ? "bg-cream-900 text-white rounded-tr-none" 
                                 : "bg-white text-cream-900 border border-cream-100 rounded-tl-none" 
@@ -754,25 +800,32 @@ export default function WritePage() {
                               )}
                               {msg.text && <div className="whitespace-pre-wrap">{msg.text}</div>}
 
-                              {/* Action Buttons (Hover) */}
+                              {/* Action Buttons (Hover or Active) */}
                               {!isSelectionMode && (
-                                <div className={cn(
-                                  "absolute top-1/2 -translate-y-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 px-2",
-                                  msg.sender === 'user' ? "right-full" : "left-full"
+                                <div 
+                                  onClick={(e) => e.stopPropagation()}
+                                  className={cn(
+                                  "absolute top-1/2 -translate-y-1/2 flex gap-2 transition-opacity z-10 px-2",
+                                  msg.sender === 'user' ? "right-full" : "left-full",
+                                  activeMessageId === msg.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                                 )}>
-                                   <button onClick={() => copyToClipboard(msg.text || '')} className="text-cream-400 hover:text-cream-900 transition-colors" title="Copy">
+                                   <button onClick={() => copyToClipboard(msg.text || '')} className="text-cream-400 hover:text-cream-900 transition-colors" title={t('write.chat.copy')}>
                                      <Copy size={16} />
                                    </button>
                                    {msg.text && (
-                                     <button onClick={() => startEditing(msg)} className="text-cream-400 hover:text-cream-900 transition-colors" title="Edit">
+                                     <button onClick={() => startEditing(msg)} className="text-cream-400 hover:text-cream-900 transition-colors" title={t('write.chat.edit')}>
                                        <Pencil size={16} />
                                      </button>
                                    )}
-                                   <button onClick={() => deleteMessages([msg.id])} className="text-cream-400 hover:text-red-600 transition-colors" title="Delete">
+                                   <button onClick={() => deleteMessages([msg.id])} className="text-cream-400 hover:text-red-600 transition-colors" title={t('write.chat.delete')}>
                                      <Trash2 size={16} />
                                    </button>
                                    {msg.sender === 'ai' && index === messages.length - 1 && !isTyping && (
-                                     <button onClick={regenerateLastResponse} className="text-cream-400 hover:text-cream-900 transition-colors" title="Regenerate">
+                                     <button 
+                                       onClick={() => regenerateLastResponse()} 
+                                       className="text-cream-400 hover:text-cream-900 transition-colors" 
+                                       title={t('write.chat.regenerate')}
+                                     >
                                         <RotateCcw size={16} />
                                      </button>
                                    )}
@@ -814,18 +867,25 @@ export default function WritePage() {
                     <button 
                       onClick={() => fileInputRef.current?.click()}
                       className="p-2 text-cream-400 hover:text-cream-900 hover:bg-cream-100 rounded-xl transition-all"
-                      title="Upload Image"
+                      title={t('write.chat.uploadImage')}
                     >
                       <ImageIcon size={24} />
                     </button>
                   </div>
 
                   <input 
+                    ref={textInputRef}
                     type="text" 
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                    placeholder="Type your message..." 
+                    onCompositionStart={() => setIsComposing(true)}
+                    onCompositionEnd={() => setIsComposing(false)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !isComposing) {
+                        handleSendMessage();
+                      }
+                    }}
+                    placeholder={t('write.chat.placeholder')} 
                     className="w-full pl-14 pr-32 py-4 bg-white border border-cream-200 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-cream-200 text-lg transition-all"
                     autoFocus
                   />
@@ -835,7 +895,7 @@ export default function WritePage() {
                       onClick={handleSendMessage}
                       disabled={!inputValue.trim()}
                       className="p-2 text-cream-400 hover:text-cream-900 hover:bg-cream-100 rounded-xl transition-all disabled:opacity-50"
-                      title="Send Message"
+                      title={t('write.chat.send')}
                     >
                       <ArrowRight size={24} />
                     </button>
@@ -846,9 +906,9 @@ export default function WritePage() {
                       onClick={handleTriggerAI}
                       disabled={isTyping || messages.length === 0 || messages[messages.length-1].sender === 'ai'}
                       className="px-3 py-2 bg-cream-900 text-white rounded-xl hover:bg-cream-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 text-sm font-medium"
-                      title="Generate Response"
+                      title={t('write.chat.reply')}
                     >
-                       <span>Reply</span>
+                       <span>{t('write.chat.reply')}</span>
                        <MessageCircle size={16} />
                     </button>
                   </div>
@@ -860,7 +920,7 @@ export default function WritePage() {
               <div className="flex items-center gap-4 mb-4 flex-wrap">
                 <input 
                   type="text" 
-                  placeholder="Title" 
+                  placeholder={t('write.manual.titlePlaceholder')} 
                   value={manualTitle}
                   onChange={(e) => setManualTitle(e.target.value)}
                   className="flex-1 min-w-[200px] text-3xl font-bold text-cream-900 placeholder:text-cream-900/20 border-none outline-none bg-transparent"
@@ -870,7 +930,7 @@ export default function WritePage() {
               
               <div className="flex flex-col md:flex-row gap-4 mb-4">
                 <div className="flex-1">
-                  <label className="block text-xs font-medium text-cream-500 mb-1 uppercase tracking-wide">Category</label>
+                  <label className="block text-xs font-medium text-cream-500 mb-1 uppercase tracking-wide">{t('write.manual.category')}</label>
                   <CategorySelector 
                      value={manualCategory} 
                      onChange={setManualCategory} 
@@ -878,7 +938,7 @@ export default function WritePage() {
                   />
                 </div>
                 <div className="flex-[2]">
-                  <label className="block text-xs font-medium text-cream-500 mb-1 uppercase tracking-wide">Tags</label>
+                  <label className="block text-xs font-medium text-cream-500 mb-1 uppercase tracking-wide">{t('write.manual.tags')}</label>
                   <TagEditor 
                     tags={manualTags} 
                     setTags={setManualTags} 
@@ -909,7 +969,7 @@ export default function WritePage() {
                       value={manualContent} 
                       onChange={setManualContent} 
                       modules={modules}
-                      placeholder="Start writing..."
+                      placeholder={t('write.manual.contentPlaceholder')}
                       className="h-full"
                     />
                 )}
@@ -945,7 +1005,7 @@ export default function WritePage() {
              <div className="flex items-center justify-between mb-4">
                <h3 className="text-xl font-bold text-cream-900 flex items-center gap-2">
                  <Sparkles className="text-amber-400" />
-                 Generated Diary
+                 {t('write.generated.title')}
                </h3>
                <div className="flex gap-2">
                   <button 
@@ -966,7 +1026,7 @@ export default function WritePage() {
                     <div className="w-12 h-12 border-4 border-cream-200 border-t-cream-900 rounded-full animate-spin"></div>
                     <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-amber-400 animate-pulse" size={16} />
                   </div>
-                  <p className="font-medium animate-pulse">Crafting your diary...</p>
+                  <p className="font-medium animate-pulse">{t('write.generated.crafting')}</p>
                 </div>
              ) : (
                <div className="flex-1 flex flex-col min-h-0">
@@ -976,7 +1036,7 @@ export default function WritePage() {
                      value={generatedTitle}
                      onChange={(e) => setGeneratedTitle(e.target.value)}
                      className="w-full text-2xl font-bold text-cream-900 border-none outline-none placeholder:text-cream-300 bg-transparent"
-                     placeholder="Diary Title"
+                     placeholder={t('write.generated.titlePlaceholder')}
                    />
                    <CategorySelector 
                       value={generatedCategory} 
@@ -1007,12 +1067,12 @@ export default function WritePage() {
                  
                  <div className="flex gap-3 mt-4 shrink-0">
                     <button 
-                      onClick={() => handleGenerateDiary(diaryStyle)}
+                      onClick={() => setIsDiaryRerollPopupOpen(true)}
                       disabled={isGenerating}
                       className="flex-1 py-3 rounded-xl border border-cream-200 text-cream-700 hover:bg-cream-50 transition-colors flex items-center justify-center gap-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <RotateCcw size={18} />
-                      Re-roll
+                      {t('write.generated.reroll')}
                     </button>
                     <button 
                       onClick={handleSaveDiary}
@@ -1020,7 +1080,7 @@ export default function WritePage() {
                       className="flex-1 py-3 rounded-xl bg-cream-900 text-white hover:bg-cream-800 transition-colors flex items-center justify-center gap-2 font-medium shadow-lg shadow-cream-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Save size={18} />
-                      Save to Diary
+                      {t('write.generated.save')}
                     </button>
                  </div>
                </div>
@@ -1054,6 +1114,67 @@ export default function WritePage() {
               
               <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
                 <AISettings />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+
+
+      {/* Diary Reroll Instruction Popup */}
+      <AnimatePresence>
+        {isDiaryRerollPopupOpen && (
+          <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b border-cream-100">
+                <h3 className="text-lg font-bold text-cream-900 flex items-center gap-2">
+                  <RotateCcw size={18} className="text-cream-400" />
+                  Regenerate Diary
+                </h3>
+                <button 
+                  onClick={() => setIsDiaryRerollPopupOpen(false)}
+                  className="p-2 text-cream-400 hover:bg-cream-50 rounded-lg transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="p-6">
+                <p className="text-sm text-cream-600 mb-3">
+                  Optional: Provide specific instructions for this version (e.g., "Make it more poetic", "Focus on the morning").
+                </p>
+                <textarea
+                  value={diaryRerollInstruction}
+                  onChange={(e) => setDiaryRerollInstruction(e.target.value)}
+                  placeholder="Optional instruction..."
+                  className="w-full h-24 p-3 bg-cream-50 border border-cream-200 rounded-xl resize-none outline-none focus:ring-2 focus:ring-cream-200 text-cream-900 placeholder:text-cream-400"
+                  autoFocus
+                />
+                
+                <div className="flex justify-end gap-3 mt-4">
+                  <button 
+                    onClick={() => setIsDiaryRerollPopupOpen(false)}
+                    className="px-4 py-2 text-sm font-medium text-cream-600 hover:bg-cream-50 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={() => {
+                      handleGenerateDiary(diaryRerollInstruction);
+                      setIsDiaryRerollPopupOpen(false);
+                    }}
+                    className="px-4 py-2 text-sm font-medium bg-cream-900 text-white rounded-lg hover:bg-cream-800 transition-colors shadow-sm flex items-center gap-2"
+                  >
+                    <RotateCcw size={14} />
+                    Regenerate
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>

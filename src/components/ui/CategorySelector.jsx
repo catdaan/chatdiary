@@ -1,18 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus, Check, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useTranslation } from 'react-i18next';
 
 export const CategorySelector = ({ value, onChange, existingCategories = [] }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value || '');
   const containerRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Default categories
-  const defaultCategories = ['Daily Life', 'Work', 'Travel', 'Emotions', 'Dreams', 'Reading'];
-  
   // Combine defaults with existing ones, remove duplicates
-  const allCategories = [...new Set([...defaultCategories, ...existingCategories])];
+  const allCategories = [...new Set(existingCategories)];
   
   // Filter logic: 
   // 1. If input is empty, show all.
@@ -89,14 +88,14 @@ export const CategorySelector = ({ value, onChange, existingCategories = [] }) =
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           className="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm text-cream-900 focus:outline-none focus:border-cream-400 focus:ring-1 focus:ring-cream-400 pr-16" // More padding for buttons
-          placeholder="Select or type category..."
+          placeholder={t('write.categorySelector.placeholder')}
         />
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
             {inputValue && (
                 <button 
                     onClick={clearInput}
                     className="p-1 text-cream-400 hover:text-cream-600 rounded-full hover:bg-cream-100 transition-colors"
-                    title="Clear"
+                    title={t('write.categorySelector.clear')}
                 >
                     <X size={14} />
                 </button>
@@ -135,13 +134,13 @@ export const CategorySelector = ({ value, onChange, existingCategories = [] }) =
                 onClick={handleCreate}
              >
                 <Plus size={14} />
-                <span>Create "{inputValue}"</span>
+                <span>{t('write.categorySelector.create', { value: inputValue })}</span>
              </div>
           )}
 
           {filteredCategories.length === 0 && !showCreateOption && (
              <div className="px-3 py-2 text-sm text-cream-400 italic">
-                No categories found.
+                {t('write.categorySelector.noCategories')}
              </div>
           )}
         </div>

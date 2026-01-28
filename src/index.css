@@ -32,6 +32,7 @@ body {
   background-color: var(--color-diary-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none; /* Prevent pull-to-refresh/bounce on body */
 }
 
 /* Custom scrollbar - Hidden globally */
@@ -98,7 +99,16 @@ body {
     transform: translateY(0);
   }
   30% {
-    transform: translateY(-5px);
+    transform: translateY(-4px);
+  }
+}
+
+/* Prevent iOS zoom on focus by enforcing 16px font size on inputs */
+@media screen and (max-width: 768px) {
+  input:not(.text-2xl):not(.text-3xl):not(.text-4xl):not(.text-5xl), 
+  textarea:not(.text-2xl):not(.text-3xl):not(.text-4xl):not(.text-5xl), 
+  select:not(.text-2xl):not(.text-3xl):not(.text-4xl):not(.text-5xl) {
+    font-size: 16px !important;
   }
 }
 
