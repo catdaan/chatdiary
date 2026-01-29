@@ -361,10 +361,19 @@ export default function WritePage() {
     if (!inputValue.trim()) return;
     sendMessage(inputValue);
     setInputValue('');
+    
     // Fix for iOS voice input ghost text
     if (textInputRef.current) {
       textInputRef.current.value = '';
     }
+    
+    // Additional aggressive clear for iOS dictation
+    setTimeout(() => {
+      setInputValue('');
+      if (textInputRef.current) {
+        textInputRef.current.value = '';
+      }
+    }, 100);
   };
 
   const handleTriggerAI = async () => {

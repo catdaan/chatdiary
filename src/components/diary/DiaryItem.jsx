@@ -298,7 +298,7 @@ export default function DiaryItem({ diary }) {
                         e.stopPropagation();
                         setShowChatHistoryDeleteConfirm(true);
                     }}
-                    className="p-1.5 text-cream-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                    className="p-1.5 text-cream-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
                     title={t('diary_item.delete_chat_history_title')}
                 >
                     <Trash2 size={16} />

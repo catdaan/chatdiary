@@ -10,6 +10,7 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
   const { polishDiary, isTyping, currentPersona } = useAI();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Initialize with greeting if empty
@@ -36,10 +37,20 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
     const updatedMessages = [...messages, newMsg];
     setMessages(updatedMessages);
     setInput('');
+    
     // Fix for iOS voice input ghost text
     if (inputRef.current) {
       inputRef.current.value = '';
     }
+    
+    // Additional aggressive clear for iOS dictation
+    setTimeout(() => {
+      setInput('');
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
+    }, 100);
+
     setIsProcessing(true);
 
     try {
@@ -295,6 +306,7 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
             
             <div className="flex items-center gap-2 bg-cream-50 p-2 rounded-xl border border-cream-200 focus-within:border-cream-400 transition-colors">
                 <input 
+                    ref={inputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}

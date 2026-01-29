@@ -852,6 +852,7 @@ Role: You are an AI companion.
 
 # TIME/DATE CONTEXT
 Current Context Date: ${dateString} (${activeDate})
+Current Time: ${new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
 
 # USER PROFILE
 - Name: ${profile.username || 'Not set'}
@@ -991,7 +992,7 @@ ${persona.customPrompt || "No custom settings."}
       // Parse activeDate to get a friendly format
       const [year, month, day] = activeDate.split('-').map(Number);
       const dateObj = new Date(year, month - 1, day);
-      const today = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const targetDateFormatted = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
       
       const style = diarySettings.withAiTrace ? 'with_ai_trace' : 'no_ai_trace';
       const systemPrompt = DIARY_PROMPTS[style] || DIARY_PROMPTS.no_ai_trace;
@@ -1005,19 +1006,17 @@ ${persona.customPrompt || "No custom settings."}
       - Interests: ${profile.interests || 'Not set'}
       `;
 
-      // Limit chat history to avoid token limits (keep last 50 messages)
-      const limitedChatHistory = chatHistory.slice(-50);
-
-      // Convert chat history to text format for context with rough timestamps
-      // msg.id is usually a timestamp, but handle cases where it isn't
-      const chatContext = limitedChatHistory.map(msg => {
+      // Use full chat history for the day as requested by user
+      // Token limits are high enough (128k+) to handle a full day's chat in most cases.
+      // We do not slice or substring to ensure ALL of today's context is included.
+      const chatContext = chatHistory.map(msg => {
           let timeStr = '';
           const date = new Date(msg.id);
           if (!isNaN(date.getTime())) {
               timeStr = `[${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}] `;
           }
           return `${timeStr}${msg.sender}: ${msg.text}`;
-      }).join('\n').substring(0, 15000); // Hard limit to ~15k chars to be safe
+      }).join('\n');
       
       const fullPrompt = `
       ${systemPrompt}
@@ -1025,22 +1024,26 @@ ${persona.customPrompt || "No custom settings."}
       # DIARY WRITING STYLE
       The user has configured a specific writing style for this AI persona. You MUST adhere to this style guidance:
       "${diarySettings.diaryStylePrompt || 'Maintain a natural, personal tone.'}"
+
+      # LENGTH CONSTRAINT
+      The user has requested a diary length of approximately ${diarySettings.wordCount} words (or characters for CJK languages). 
+      Please try to stay within this range, but prioritize content quality and completeness.
       
       IMPORTANT: 
       1. You must ALWAYS maintain the "First Person" ('I') perspective and the "Ghostwriter" role (never reveal you are AI).
       2. You must ALWAYS stick to the actual events in the chat (no hallucinations).
       3. ONLY override the *tone* or *formatting* rules (like emojis, sentence length) if the user's custom style above explicitly demands it. Otherwise, the "Ghostwriter" rules (No AI traces, authentic voice) remain absolute.
 
-      Current Date: ${today}
+      Target Diary Date: ${targetDateFormatted}
 
       ${userProfileContext}
 
       Recent Diaries (for context only):
       ${recentDiaries || "No recent diaries found."}
 
-      ${todaysDiaries ? `# EXISTING DIARIES FOR TODAY (DO NOT REPEAT):\nThe user has already written the following entries for today. \n- IF the chat history contains NEW events not covered here, focus strictly on those NEW events.\n- IF the chat history is just more detail on the same events, write a "Part 2" or reflective continuation.\n- AVOID simply re-summarizing what is already written below:\n${todaysDiaries}\n` : ''}
+      ${todaysDiaries ? `# EXISTING DIARIES FOR THIS DATE (DO NOT REPEAT):\nThe user has already written the following entries for this date. \n- IF the chat history contains NEW events not covered here, focus strictly on those NEW events.\n- IF the chat history is just more detail on the same events, write a "Part 2" or reflective continuation.\n- AVOID simply re-summarizing what is already written below:\n${todaysDiaries}\n` : ''}
 
-      ${instruction ? `# ADDITIONAL USER INSTRUCTION:\nThe user has requested a specific adjustment for this version: "${instruction}".\nPlease incorporate this instruction while maintaining the persona and style.\n` : ''}
+      ${instruction ? `# ADDITIONAL USER INSTRUCTION:\nThe user has requested a specific adjustment for this version: "${instruction}".\nPlease incorporate this instruction while incorporating the persona and style.\n` : ''}
 
       # LANGUAGE INSTRUCTION:
       The user is writing in a specific language. 
