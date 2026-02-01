@@ -83,6 +83,17 @@
         "addPreset": "Add Preset"
       }
     },
+    "usage": {
+      "title": "Usage Guide",
+      "chat": "Chat Mode",
+      "chatDesc": "Chat freely with AI to share your daily moments. AI will remember your stories and generate a diary for you at the end of the day.",
+      "manual": "Manual Mode",
+      "manualDesc": "Switch to manual mode to write the diary yourself. You can also use the AI Polish Assistant to improve your writing.",
+      "polish": "Polish Assistant",
+      "polishDesc": "In manual mode, click the 'Magic Wand' icon to let AI help you check grammar, enrich vocabulary, or change the tone.",
+      "settings": "Personalization",
+      "settingsDesc": "Adjust AI persona, response style, and diary generation length and tone in settings."
+    },
     "interface": {
       "title": "Interface Settings",
       "language": "System Language",
@@ -261,8 +272,13 @@
       "title": "Generated Diary",
       "crafting": "Crafting your diary...",
       "titlePlaceholder": "Diary Title",
-      "reroll": "Re-roll",
-      "save": "Save to Diary"
+      "reroll": "Reroll",
+      "save": "Save to Diary",
+      "rerollTitle": "Regenerate Diary",
+      "rerollInstruction": "Optional: Provide specific instructions for this version (e.g., \"Make it more poetic\", \"Focus on the morning\").",
+      "rerollPlaceholder": "Optional instruction...",
+      "cancel": "Cancel",
+      "confirm": "Regenerate"
     },
     "categorySelector": {
       "placeholder": "Select or type category...",

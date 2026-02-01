@@ -83,6 +83,17 @@
         "addPreset": "新增預設"
       }
     },
+    "usage": {
+      "title": "使用指南",
+      "chat": "聊天模式",
+      "chatDesc": "與 AI 自由對話，分享你的日常點滴。AI 會記住你的故事，並在一天結束時為你生成日記。",
+      "manual": "手動模式",
+      "manualDesc": "切換到手動模式，你可以親自撰寫日記。同時可以使用 AI 潤色助手來優化你的文字。",
+      "polish": "潤色助手",
+      "polishDesc": "在手動模式下，點擊「魔法棒」圖標，讓 AI 幫你檢查語法、豐富詞彙或改變語氣。",
+      "settings": "個性化設置",
+      "settingsDesc": "在設置中調整 AI 的性格、回應風格，以及日記生成的字數和語氣。"
+    },
     "interface": {
       "title": "介面設定",
       "language": "系統語言",
@@ -262,7 +273,12 @@
       "crafting": "正在撰寫你的日記...",
       "titlePlaceholder": "日記標題",
       "reroll": "重新生成",
-      "save": "保存到日記"
+      "save": "保存到日記",
+      "rerollTitle": "重新生成日記",
+      "rerollInstruction": "可選：為此版本提供具體指令（例如：「更具詩意」、「重點關注早晨」）。",
+      "rerollPlaceholder": "可選指令...",
+      "cancel": "取消",
+      "confirm": "重新生成"
     },
     "categorySelector": {
       "placeholder": "選擇或輸入分類...",

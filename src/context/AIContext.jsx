@@ -725,6 +725,7 @@ ${d.ai_briefing.unfinished_topics ? `- Unfinished Topics: ${d.ai_briefing.unfini
 
     # CURRENT CONTEXT:
 - **Current System Time**: ${new Date().toLocaleString()}
+- **Timezone**: ${Intl.DateTimeFormat().resolvedOptions().timeZone}
 - **Target Diary Date**: ${activeDate}
 - **User Profile**: Name: ${profile.name || 'User'}, Focus: ${JSON.stringify(profile.currentFocus || [])}
 
@@ -853,6 +854,7 @@ Role: You are an AI companion.
 # TIME/DATE CONTEXT
 Current Context Date: ${dateString} (${activeDate})
 Current Time: ${new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+Timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}
 
 # USER PROFILE
 - Name: ${profile.username || 'Not set'}

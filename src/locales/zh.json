@@ -83,6 +83,17 @@
         "addPreset": "添加预设"
       }
     },
+    "usage": {
+      "title": "使用指南",
+      "chat": "聊天模式",
+      "chatDesc": "与 AI 自由对话，分享你的日常点滴。AI 会记住你的故事，并在一天结束时为你生成日记。",
+      "manual": "手动模式",
+      "manualDesc": "切换到手动模式，你可以亲自撰写日记。同时可以使用 AI 润色助手来优化你的文字。",
+      "polish": "润色助手",
+      "polishDesc": "在手动模式下，点击“魔法棒”图标，让 AI 帮你检查语法、丰富词汇或改变语气。",
+      "settings": "个性化设置",
+      "settingsDesc": "在设置中调整 AI 的性格、回应风格，以及日记生成的字数和语气。"
+    },
     "interface": {
       "title": "界面设置",
       "language": "系统语言",
@@ -262,7 +273,12 @@
       "crafting": "正在撰写你的日记...",
       "titlePlaceholder": "日记标题",
       "reroll": "重新生成",
-      "save": "保存到日记"
+      "save": "保存到日记",
+      "rerollTitle": "重新生成日记",
+      "rerollInstruction": "可选：为此版本提供具体指令（例如：“更具诗意”、“重点关注早晨”）。",
+      "rerollPlaceholder": "可选指令...",
+      "cancel": "取消",
+      "confirm": "重新生成"
     },
     "categorySelector": {
       "placeholder": "选择或输入分类...",

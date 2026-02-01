@@ -1144,7 +1144,7 @@ export default function WritePage() {
               <div className="flex items-center justify-between px-6 py-4 border-b border-cream-100">
                 <h3 className="text-lg font-bold text-cream-900 flex items-center gap-2">
                   <RotateCcw size={18} className="text-cream-400" />
-                  Regenerate Diary
+                  {t('write.generated.rerollTitle')}
                 </h3>
                 <button 
                   onClick={() => setIsDiaryRerollPopupOpen(false)}
@@ -1156,12 +1156,12 @@ export default function WritePage() {
               
               <div className="p-6">
                 <p className="text-sm text-cream-600 mb-3">
-                  Optional: Provide specific instructions for this version (e.g., "Make it more poetic", "Focus on the morning").
+                  {t('write.generated.rerollInstruction')}
                 </p>
                 <textarea
                   value={diaryRerollInstruction}
                   onChange={(e) => setDiaryRerollInstruction(e.target.value)}
-                  placeholder="Optional instruction..."
+                  placeholder={t('write.generated.rerollPlaceholder')}
                   className="w-full h-24 p-3 bg-cream-50 border border-cream-200 rounded-xl resize-none outline-none focus:ring-2 focus:ring-cream-200 text-cream-900 placeholder:text-cream-400"
                   autoFocus
                 />
@@ -1171,7 +1171,7 @@ export default function WritePage() {
                     onClick={() => setIsDiaryRerollPopupOpen(false)}
                     className="px-4 py-2 text-sm font-medium text-cream-600 hover:bg-cream-50 rounded-lg transition-colors"
                   >
-                    Cancel
+                    {t('write.generated.cancel')}
                   </button>
                   <button 
                     onClick={() => {
@@ -1181,7 +1181,7 @@ export default function WritePage() {
                     className="px-4 py-2 text-sm font-medium bg-cream-900 text-white rounded-lg hover:bg-cream-800 transition-colors shadow-sm flex items-center gap-2"
                   >
                     <RotateCcw size={14} />
-                    Regenerate
+                    {t('write.generated.confirm')}
                   </button>
                 </div>
               </div>

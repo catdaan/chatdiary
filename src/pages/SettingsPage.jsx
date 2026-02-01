@@ -11,6 +11,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import AISettings from '../components/settings/AISettings';
 import InterfaceSettings from '../components/settings/InterfaceSettings';
 import BackupSettings from '../components/settings/BackupSettings';
+import UsageGuide from '../components/settings/UsageGuide';
 import { useTranslation } from 'react-i18next';
 
 const PROVIDERS = [
@@ -335,6 +336,7 @@ export default function SettingsPage() {
         <AISettings />
         <InterfaceSettings />
         <BackupSettings />
+        <UsageGuide />
       </div>
     </div>
   );
