@@ -44,13 +44,14 @@ Your task is to write a diary entry from the USER's perspective ("I").
 - **AI as a Character**: You (the AI) are a "Listener" or "Companion" that the user chatted with today.
 - **The User's Voice**: Write as the user reflecting on their day and their conversation with you.
 - **Interaction**: Explicitly mention the act of talking to the AI.
-    - Example tone: "I talked to the AI about [Topic] today. It didn't solve everything, but saying it out loud helped."
-    - Example tone: "Shared my worries with the AI companion. It's funny how just typing things out makes them clearer."
+    - IMPORTANT: When referring to the AI, use the AI's persona name (if available) or "My Companion". Do NOT use the generic term "AI".
+    - Example tone: "I talked to [Persona Name] about [Topic] today. It didn't solve everything, but saying it out loud helped."
+    - Example tone: "Shared my worries with my digital friend. It's funny how just typing things out makes them clearer."
 
 # CRITICAL RULES:
 1. **First Person ("I")**: You are the user.
 2. **Authentic & Reflective**: Focus on feelings, realizations, and the relief of venting/sharing.
-3. **No "Robot" Talk**: Do not write "The AI analyzed my data." Write "I told it about..." or "We chatted about...".
+3. **No "Robot" Talk**: Do not write "The AI analyzed my data." Write "I told [Persona Name] about..." or "We chatted about...".
 4. **Structure**: Title -> Body (including the reflection on the chat).
 
 # AI BRIEFING (FOR FUTURE MEMORY):
@@ -522,6 +523,12 @@ export const AIProvider = ({ children }) => {
             } else if (item.type === 'image_url') {
               // Parse Data URL: data:image/jpeg;base64,....
               try {
+                // Check if url is defined before matching
+                if (!item.image_url || !item.image_url.url) {
+                    console.warn("Skipping image with no URL:", item);
+                    return;
+                }
+
                 const matches = item.image_url.url.match(/^data:(.+);base64,(.+)$/);
                 if (matches) {
                   parts.push({
@@ -530,6 +537,10 @@ export const AIProvider = ({ children }) => {
                       data: matches[2]
                     }
                   });
+                } else {
+                    // Fallback if not base64 data url (e.g. http url, though Gemini might not support it directly without tools)
+                    // For now, just skip or log
+                    console.warn("Skipping non-base64 image URL for Gemini:", item.image_url.url);
                 }
               } catch (e) {
                 console.error("Failed to parse image data url", e);
@@ -538,7 +549,7 @@ export const AIProvider = ({ children }) => {
           });
         } else {
           // Simple Text
-          parts.push({ text: m.content });
+          parts.push({ text: m.content || " " }); // Ensure content is not empty/null
         }
 
         return {
@@ -1026,6 +1037,10 @@ ${persona.customPrompt || "No custom settings."}
       # DIARY WRITING STYLE
       The user has configured a specific writing style for this AI persona. You MUST adhere to this style guidance:
       "${diarySettings.diaryStylePrompt || 'Maintain a natural, personal tone.'}"
+      
+      # PERSONA CONTEXT
+      The AI persona you are roleplaying as is named: "${currentPersona.name}".
+      If the user's diary entry mentions talking to you, refer to yourself by this name ("${currentPersona.name}") or as a friend/companion, but NEVER as "The AI".
 
       # LENGTH CONSTRAINT
       The user has requested a diary length of approximately ${diarySettings.wordCount} words (or characters for CJK languages). 

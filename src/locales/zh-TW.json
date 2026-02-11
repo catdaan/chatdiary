@@ -319,8 +319,11 @@
       "compareApply": "對比並應用",
       "reroll": "重新生成",
       "oneClick": "一鍵潤色",
+      "oneClickPrompt": "請潤色這篇日記，使其通順並修正錯誤。",
       "emotional": "更具情感",
+      "emotionalPrompt": "讓文字更具情感",
       "grammar": "僅修語法",
+      "grammarPrompt": "僅修正語法錯誤",
       "placeholder": "提出修改要求..."
     },
     "moods": {
@@ -349,7 +352,7 @@
     "no_memories": "還沒有記憶。開始記錄吧！"
   },
   "categories": {
-    "title": "書架",
+    "title": "分類",
     "manage": "管理",
     "done": "完成",
     "entries": "{{count}} 篇日記",

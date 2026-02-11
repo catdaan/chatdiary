@@ -13,6 +13,9 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
   const inputRef = useRef(null);
   const [isProcessing, setIsProcessing] = useState(false);
   
+  // Debounce timer ref
+  const debounceTimerRef = useRef(null);
+
   // Initialize with greeting if empty
   useEffect(() => {
     if (isOpen && messages.length === 0) {
@@ -30,32 +33,20 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
     scrollToBottom();
   }, [messages, isOpen]);
 
-  const handleSend = async (text = input) => {
-    if (!text.trim() || isProcessing) return;
+  // Main AI Processing Logic
+  const processAIResponse = async (currentMsgs) => {
+    if (!currentMsgs || currentMsgs.length === 0) return;
     
-    const newMsg = { id: Date.now(), role: 'user', content: text };
-    const updatedMessages = [...messages, newMsg];
-    setMessages(updatedMessages);
-    setInput('');
-    
-    // Fix for iOS voice input ghost text
-    if (inputRef.current) {
-      inputRef.current.value = '';
-    }
-    
-    // Additional aggressive clear for iOS dictation
-    setTimeout(() => {
-      setInput('');
-      if (inputRef.current) {
-        inputRef.current.value = '';
-      }
-    }, 100);
+    // Double check if last message is user (sanity check)
+    const lastMsg = currentMsgs[currentMsgs.length - 1];
+    if (lastMsg.role !== 'user') return;
 
     setIsProcessing(true);
+    const lastMsgId = lastMsg.id;
 
     try {
         // Construct history for AI
-        const apiHistory = updatedMessages
+        const apiHistory = currentMsgs
             .filter(m => m.id !== 'init')
             .map(m => ({ role: m.role, content: m.content }));
         
@@ -70,19 +61,76 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
         const response = await polishDiary(finalHistory);
         
         const aiMsg = { id: Date.now() + 1, role: 'assistant', content: response };
-        setMessages(prev => [...prev, aiMsg]);
+        
+        // Insert response after the message it replied to (to handle concurrent user inputs)
+        setMessages(prev => {
+            const index = prev.findIndex(m => m.id === lastMsgId);
+            if (index === -1) return [...prev, aiMsg]; // Fallback
+            
+            const newMsgs = [...prev];
+            newMsgs.splice(index + 1, 0, aiMsg);
+            return newMsgs;
+        });
     } catch (e) {
-        setMessages(prev => [...prev, { id: Date.now(), role: 'assistant', content: t('write.polish.error') }]);
+        const errorMsg = { id: Date.now(), role: 'assistant', content: t('write.polish.error') };
+        setMessages(prev => [...prev, errorMsg]);
     } finally {
         setIsProcessing(false);
     }
   };
 
-  const handleOneClickPolish = () => {
-    handleSend("Please polish this diary entry to make it flow better and correct any mistakes.");
+  // Auto-trigger AI when user stops typing
+  useEffect(() => {
+    // If currently processing, do nothing (it will re-check when processing finishes)
+    if (isProcessing) return;
+
+    const lastMsg = messages[messages.length - 1];
+    
+    // If last message is User, trigger AI
+    if (lastMsg && lastMsg.role === 'user') {
+        // Clear existing timer
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        
+        // Set new timer (800ms debounce)
+        debounceTimerRef.current = setTimeout(() => {
+            processAIResponse(messages);
+        }, 800);
+    }
+
+    return () => {
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, [messages, isProcessing]);
+
+
+  const handleSend = (text = input) => {
+    if (!text.trim()) return;
+    
+    const newMsg = { id: Date.now(), role: 'user', content: text };
+    
+    // Just update state, let useEffect handle the AI call
+    setMessages(prev => [...prev, newMsg]);
+    setInput('');
+    
+    // Fix for iOS voice input ghost text
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
+    
+    // Additional aggressive clear for iOS dictation
+    setTimeout(() => {
+      setInput('');
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
+    }, 100);
   };
 
-  const handleReroll = async () => {
+  const handleOneClickPolish = () => {
+    handleSend(t('write.polish.oneClickPrompt'));
+  };
+
+  const handleReroll = () => {
     if (isProcessing) return;
     
     // Find the last assistant message to remove
@@ -94,31 +142,8 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
     // Remove the last assistant message
     const newMessages = messages.slice(0, -1);
     setMessages(newMessages);
-    setIsProcessing(true);
     
-    try {
-        // Construct history from the new state (without the last AI response)
-        const apiHistory = newMessages
-            .filter(m => m.id !== 'init')
-            .map(m => ({ role: m.role, content: m.content }));
-        
-        // Inject context (same as handleSend)
-        const contextMessage = { 
-            role: 'user', 
-            content: `Here is my current diary draft:\n\n"${currentContent}"\n\n(Please use this as the context for my requests)` 
-        };
-        
-        const finalHistory = [contextMessage, ...apiHistory];
-        
-        const response = await polishDiary(finalHistory);
-        
-        const aiMsg = { id: Date.now() + 1, role: 'assistant', content: response };
-        setMessages(prev => [...prev, aiMsg]);
-    } catch (e) {
-        setMessages(prev => [...prev, { id: Date.now(), role: 'assistant', content: t('write.polish.errorReroll') }]);
-    } finally {
-        setIsProcessing(false);
-    }
+    // The useEffect will detect that the new last message is 'user' and trigger regeneration automatically
   };
 
   const extractPolishedData = (text) => {
@@ -282,23 +307,20 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
             <div className="flex gap-2 mb-2 overflow-x-auto pb-1 scrollbar-hide">
                 <button 
                     onClick={handleOneClickPolish}
-                    disabled={isProcessing}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-full text-xs font-medium border border-amber-200 transition-colors whitespace-nowrap disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-full text-xs font-medium border border-amber-200 transition-colors whitespace-nowrap"
                 >
                     <Wand2 size={12} />
                     {t('write.polish.oneClick')}
                 </button>
                 <button 
-                     onClick={() => handleSend("Make it more emotional")}
-                     disabled={isProcessing}
-                     className="px-3 py-1.5 bg-cream-50 text-cream-700 hover:bg-cream-100 rounded-full text-xs font-medium border border-cream-200 transition-colors whitespace-nowrap disabled:opacity-50"
+                     onClick={() => handleSend(t('write.polish.emotionalPrompt'))}
+                     className="px-3 py-1.5 bg-cream-50 text-cream-700 hover:bg-cream-100 rounded-full text-xs font-medium border border-cream-200 transition-colors whitespace-nowrap"
                 >
                     {t('write.polish.emotional')}
                 </button>
                 <button 
-                     onClick={() => handleSend("Fix grammar only")}
-                     disabled={isProcessing}
-                     className="px-3 py-1.5 bg-cream-50 text-cream-700 hover:bg-cream-100 rounded-full text-xs font-medium border border-cream-200 transition-colors whitespace-nowrap disabled:opacity-50"
+                     onClick={() => handleSend(t('write.polish.grammarPrompt'))}
+                     className="px-3 py-1.5 bg-cream-50 text-cream-700 hover:bg-cream-100 rounded-full text-xs font-medium border border-cream-200 transition-colors whitespace-nowrap"
                 >
                     {t('write.polish.grammar')}
                 </button>
@@ -311,12 +333,11 @@ export default function AIPolishAssistant({ isOpen, onClose, currentContent, onP
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                     placeholder={t('write.polish.placeholder')}
-                    disabled={isProcessing}
                     className="flex-1 bg-transparent border-none outline-none text-sm text-cream-900 placeholder:text-cream-400"
                 />
                 <button 
                     onClick={() => handleSend()}
-                    disabled={!input.trim() || isProcessing}
+                    disabled={!input.trim()}
                     className="p-2 bg-cream-900 text-white rounded-lg hover:bg-cream-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-circle" aria-hidden="true"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path></svg>

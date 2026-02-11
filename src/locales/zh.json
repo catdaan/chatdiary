@@ -319,8 +319,11 @@
       "compareApply": "对比并应用",
       "reroll": "重新生成",
       "oneClick": "一键润色",
+      "oneClickPrompt": "请润色这篇日记，使其通顺并修正错误。",
       "emotional": "更具情感",
+      "emotionalPrompt": "让文字更具情感",
       "grammar": "仅修语法",
+      "grammarPrompt": "仅修正语法错误",
       "placeholder": "提出修改要求..."
     },
     "moods": {
@@ -349,7 +352,7 @@
     "no_memories": "还没有记忆。开始记录吧！"
   },
   "categories": {
-    "title": "书架",
+    "title": "分类",
     "manage": "管理",
     "done": "完成",
     "entries": "{{count}} 篇日记",

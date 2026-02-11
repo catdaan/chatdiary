@@ -319,8 +319,11 @@
       "compareApply": "Compare & Apply",
       "reroll": "Reroll",
       "oneClick": "One-Click Polish",
+      "oneClickPrompt": "Please polish this diary entry to make it flow better and correct any mistakes.",
       "emotional": "Emotional",
+      "emotionalPrompt": "Make it more emotional",
       "grammar": "Grammar",
+      "grammarPrompt": "Fix grammar only",
       "placeholder": "Ask for changes..."
     },
     "moods": {
@@ -350,7 +353,7 @@
     "no_memories": "No memories yet. Start writing!"
   },
   "categories": {
-    "title": "Bookshelf",
+    "title": "Categories",
     "manage": "Manage",
     "done": "Done",
     "entries": "{{count}} entries",

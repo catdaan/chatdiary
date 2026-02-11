@@ -373,7 +373,7 @@ export default function CategoriesPage() {
       <div className="flex-1 overflow-y-auto custom-scrollbar pb-20 pr-2">
         <AnimatePresence mode="wait">
             {!selectedCategory ? (
-                /* Bookshelf View */
+                /* Categories View */
                 <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -388,8 +388,7 @@ export default function CategoriesPage() {
                          {/* Edit/Delete Buttons (Only in Manage Mode) - Overlay on Cover */}
                          {isManaging && cat.isCustom && (
                             <div className={cn(
-                                "absolute top-0 left-0 w-full aspect-[3/4] z-20 flex items-center justify-center gap-4 bg-black/40 backdrop-blur-[2px] transition-all duration-200 rounded-xl",
-                                activeCategoryId === cat.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                                "absolute top-0 left-0 w-full aspect-[3/4] z-20 flex items-center justify-center gap-4 bg-black/40 backdrop-blur-[2px] transition-all duration-200 rounded-xl opacity-100"
                             )}>
                                 <button
                                     onClick={(e) => {
