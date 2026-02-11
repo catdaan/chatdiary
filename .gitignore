@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Backup files
+*.tar.gz
+chatdairy-backup-*.json
