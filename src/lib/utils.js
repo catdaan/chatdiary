@@ -22,6 +22,15 @@ export function compressImage(file, maxWidth = 800, quality = 0.7) {
           width = maxWidth;
         }
 
+        // Additional Safety: Limit canvas dimension to avoid iOS canvas memory limit (max 16MP usually safe, but let's be conservative ~4MP)
+        const MAX_CANVAS_PIXELS = 4096 * 4096; // 16MP
+        if (width * height > MAX_CANVAS_PIXELS) {
+             // Force scale down if still too big
+             const ratio = Math.sqrt(MAX_CANVAS_PIXELS / (width * height));
+             width = Math.floor(width * ratio);
+             height = Math.floor(height * ratio);
+        }
+
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');

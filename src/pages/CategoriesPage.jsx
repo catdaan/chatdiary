@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Book, Heart, Star, Coffee, Briefcase, Plane, ArrowLeft, Folder, Smile, Layers, Plus, X, Settings, Pencil, Check, Sparkles, Trash2, Image as ImageIcon, Upload } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn, compressImage } from '../lib/utils';
 import { useDiary } from '../context/DiaryContext';
 import DiaryItem from '../components/diary/DiaryItem';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -162,14 +162,17 @@ export default function CategoriesPage() {
       setShowEditDialog(true);
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setCategoryImageInput(reader.result);
-        };
-        reader.readAsDataURL(file);
+        try {
+            // Compress image to avoid huge base64 strings (limit to 800px width)
+            const compressedDataUrl = await compressImage(file, 800, 0.7);
+            setCategoryImageInput(compressedDataUrl);
+        } catch (error) {
+            console.error("Failed to compress image:", error);
+            alert(t('common.error_image_upload_failed') || "Image upload failed. Please try a smaller image.");
+        }
     }
   };
 

@@ -99,7 +99,14 @@ export function DiaryProvider({ children }) {
   }, [diaries]);
 
   useEffect(() => {
-    localStorage.setItem('chatdairy-categories', JSON.stringify(customCategories));
+    try {
+      localStorage.setItem('chatdairy-categories', JSON.stringify(customCategories));
+    } catch (error) {
+      console.error("Failed to save categories to localStorage:", error);
+      if (error.name === 'QuotaExceededError') {
+        alert("Storage is full! Failed to save category cover. Please delete some old data.");
+      }
+    }
   }, [customCategories]);
 
   const addCategory = (categoryData) => {
