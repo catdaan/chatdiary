@@ -1,8 +1,10 @@
 
 import { format } from 'date-fns';
+import { db, STORES } from '../lib/db';
 
 const APP_KEYS = [
-  'chatdairy-entries',
+  'chatdairy-entries', // Kept for key reference, but data comes from DB
+  'chatdairy-categories', // Implicitly handled via DB
   'user_profile',
   'ai_personas',
   'ai_current_persona_id',
@@ -19,13 +21,20 @@ const DYNAMIC_KEY_PREFIXES = [
 ];
 
 export const backupService = {
-  // --- Local Storage Helpers ---
+  // --- Data Helpers ---
 
-  getAllData: () => {
+  /**
+   * Get all application data from LocalStorage and IndexedDB
+   * @returns {Promise<Object>} Backup object
+   */
+  getAllData: async () => {
     const data = {};
     
-    // Static Keys
+    // 1. Static Keys from LocalStorage
     APP_KEYS.forEach(key => {
+      // Skip DB-managed keys from LS read
+      if (key === 'chatdairy-entries' || key === 'chatdairy-categories') return;
+
       const value = localStorage.getItem(key);
       if (value !== null) {
         try {
@@ -36,7 +45,7 @@ export const backupService = {
       }
     });
 
-    // Dynamic Keys
+    // 2. Dynamic Keys from LocalStorage
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (DYNAMIC_KEY_PREFIXES.some(prefix => key.startsWith(prefix))) {
@@ -49,25 +58,48 @@ export const backupService = {
       }
     }
 
+    // 3. Data from IndexedDB
+    try {
+      const diaries = await db.getAll(STORES.DIARIES);
+      const categories = await db.getAll(STORES.CATEGORIES);
+      const chats = await db.getAll(STORES.CHATS);
+      
+      // Use legacy keys for compatibility with restore logic
+      if (diaries && diaries.length > 0) {
+        data['chatdairy-entries'] = diaries;
+      }
+      if (categories && categories.length > 0) {
+        data['chatdairy-categories'] = categories;
+      }
+      if (chats && chats.length > 0) {
+        data['chat_messages'] = chats;
+      }
+    } catch (e) {
+      console.error("Failed to fetch data from IndexedDB for backup:", e);
+      // We continue with what we have
+    }
+
     return {
-      version: 1,
+      version: 2, // Bump version to indicate DB support
       timestamp: new Date().toISOString(),
       data
     };
   },
 
-  restoreData: (backupData) => {
+  /**
+   * Restore data to LocalStorage and IndexedDB
+   * @param {Object} backupData 
+   */
+  restoreData: async (backupData) => {
     if (!backupData || !backupData.data) {
       throw new Error('Invalid backup data format');
     }
 
     const { data } = backupData;
 
-    // Clear existing app data to prevent conflicts/zombies
-    // Note: We only clear known keys to avoid wiping other apps on localhost
+    // 1. Clear existing app data
     APP_KEYS.forEach(key => localStorage.removeItem(key));
     
-    // Clear dynamic keys
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -77,28 +109,58 @@ export const backupService = {
     }
     keysToRemove.forEach(key => localStorage.removeItem(key));
 
-    // Restore
-    Object.entries(data).forEach(([key, value]) => {
+    // Clear IndexedDB stores
+    try {
+      await db.clear(STORES.DIARIES);
+      await db.clear(STORES.CATEGORIES);
+      await db.clear(STORES.CHATS);
+    } catch (e) {
+      console.error("Failed to clear IndexedDB:", e);
+    }
+
+    // 2. Restore
+    for (const [key, value] of Object.entries(data)) {
+      // Handle DB-managed keys
+      if (key === 'chatdairy-entries') {
+        if (Array.isArray(value)) {
+          await db.putAll(STORES.DIARIES, value);
+        }
+        continue;
+      }
+      if (key === 'chatdairy-categories') {
+        if (Array.isArray(value)) {
+          await db.putAll(STORES.CATEGORIES, value);
+        }
+        continue;
+      }
+      if (key === 'chat_messages') {
+        if (Array.isArray(value)) {
+          await db.putAll(STORES.CHATS, value);
+        }
+        continue;
+      }
+
+      // Handle LocalStorage keys
       if (typeof value === 'object') {
         localStorage.setItem(key, JSON.stringify(value));
       } else {
         localStorage.setItem(key, value);
       }
-    });
+    }
 
     return true;
   },
 
   // --- File Backup (Local / iCloud) ---
 
-  downloadBackup: () => {
-    const backup = backupService.getAllData();
+  downloadBackup: async () => {
+    const backup = await backupService.getAllData();
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     
     const a = document.createElement('a');
     a.href = url;
-    a.download = `chatdairy-backup-${format(new Date(), 'yyyy-MM-dd-HHmm')}.json`;
+    a.download = `chatdiary-backup-${format(new Date(), 'yyyy-MM-dd-HHmm')}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -107,13 +169,8 @@ export const backupService = {
 
   // --- GitHub Backup ---
 
-  /**
-   * Sync to GitHub Gist
-   * @param {string} token - GitHub Personal Access Token
-   * @param {string} gistId - Existing Gist ID (optional)
-   */
   syncToGitHubGist: async (token, gistId = null) => {
-    const backup = backupService.getAllData();
+    const backup = await backupService.getAllData();
     const filename = `chatdairy-backup.json`;
     const content = JSON.stringify(backup, null, 2);
 
@@ -160,11 +217,6 @@ export const backupService = {
     return result;
   },
 
-  /**
-   * Restore from GitHub Gist
-   * @param {string} token 
-   * @param {string} gistId 
-   */
   restoreFromGist: async (token, gistId) => {
     if (!token || !gistId) throw new Error('Token and Gist ID required');
 
@@ -197,7 +249,7 @@ export const backupService = {
     }
 
     const data = JSON.parse(contentStr);
-    return backupService.restoreData(data);
+    return await backupService.restoreData(data);
   },
 
   // --- Auto Backup ---
@@ -237,16 +289,9 @@ export const backupService = {
   },
 
   // --- Google Drive Backup (Simple Upload) ---
-  // Note: This requires a valid Access Token which must be obtained via OAuth flow.
-  // Since we don't have a backend to handle client secrets, we rely on the user 
-  // providing a token or using a client-side implicit flow if we implement the UI for it.
   
-  /**
-   * Upload to Google Drive
-   * @param {string} accessToken - Valid Google OAuth2 Access Token
-   */
   uploadToGoogleDrive: async (accessToken) => {
-    const backup = backupService.getAllData();
+    const backup = await backupService.getAllData();
     const fileContent = JSON.stringify(backup, null, 2);
     const file = new Blob([fileContent], { type: 'application/json' });
     

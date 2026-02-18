@@ -133,9 +133,9 @@ const BackupSettings = () => {
   }, [gdriveToken]);
 
   // --- Handlers ---
-  const handleDownload = () => {
+  const handleDownload = async () => {
     try {
-      backupService.downloadBackup();
+      await backupService.downloadBackup();
     } catch (e) {
       console.error(e);
       alert(t('settings.backup.local.downloadError'));
@@ -151,7 +151,7 @@ const BackupSettings = () => {
       const data = JSON.parse(text);
       
       if (confirm(t('settings.backup.local.restoreConfirm'))) {
-        backupService.restoreData(data);
+        await backupService.restoreData(data);
         alert(t('settings.backup.local.restoreSuccess'));
         window.location.reload();
       }

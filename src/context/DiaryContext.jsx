@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { db, STORES } from '../lib/db';
 
 const DiaryContext = createContext({
   diaries: [],
@@ -37,16 +38,8 @@ const MOCK_DIARIES = [
 ];
 
 export function DiaryProvider({ children }) {
-  const [diaries, setDiaries] = useState(() => {
-    try {
-      const saved = localStorage.getItem('chatdairy-entries');
-      const parsed = saved ? JSON.parse(saved) : null;
-      return Array.isArray(parsed) ? parsed : MOCK_DIARIES;
-    } catch (e) {
-      console.error("Failed to parse chatdairy-entries:", e);
-      return MOCK_DIARIES;
-    }
-  });
+  const [diaries, setDiaries] = useState([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Default Categories Data
   const DEFAULT_CATEGORIES_DATA = [
@@ -55,59 +48,129 @@ export function DiaryProvider({ children }) {
     { id: 'Travel', name: 'Travel', iconName: 'Plane', color: 'bg-green-100 text-green-600' },
   ];
 
-  // Custom Categories State (Now stores objects { id, name, color, coverImage, iconName })
-  const [customCategories, setCustomCategories] = useState(() => {
-    try {
-      const saved = localStorage.getItem('chatdairy-categories');
-      const initialized = localStorage.getItem('chatdairy-categories-initialized');
-      
-      let parsed = saved ? JSON.parse(saved) : [];
-      
-      if (!initialized) {
-          // Migration 1: if stored as array of strings, convert to objects
-          if (parsed.length > 0 && typeof parsed[0] === 'string') {
-              parsed = parsed.map(name => ({ id: name, name, color: 'bg-indigo-100 text-indigo-600', iconName: 'Layers' }));
-          }
-    
-          // Migration 2: Ensure defaults exist (Migration from hardcoded defaults to persisted state)
-          // Only do this if we haven't initialized before
-          const hasDefaults = parsed.some(c => c.name === 'Daily Life');
-          if (!hasDefaults) {
-              // Merge defaults at the beginning
-              parsed = [...DEFAULT_CATEGORIES_DATA, ...parsed];
+  const [customCategories, setCustomCategories] = useState([]);
+
+  // Initialization: Load from DB or Migrate from LocalStorage
+  useEffect(() => {
+    const init = async () => {
+      try {
+        // 1. Try to load from IndexedDB
+        const storedDiaries = await db.getAll(STORES.DIARIES);
+        const storedCategories = await db.getAll(STORES.CATEGORIES);
+        
+        // 2. Check if migration is needed (if DB is empty but LocalStorage has data)
+        const hasDBData = storedDiaries.length > 0 || storedCategories.length > 0;
+        const lsEntries = localStorage.getItem('chatdairy-entries');
+        
+        if (!hasDBData && lsEntries) {
+          console.log("Migrating data from LocalStorage to IndexedDB...");
+          
+          // Migrate Diaries
+          let parsedDiaries = [];
+          try {
+             parsedDiaries = JSON.parse(lsEntries);
+             if (!Array.isArray(parsedDiaries)) parsedDiaries = MOCK_DIARIES;
+          } catch {
+             parsedDiaries = MOCK_DIARIES;
           }
           
-          // Mark as initialized
-          localStorage.setItem('chatdairy-categories-initialized', 'true');
-      }
-      
-      return parsed;
-    } catch (e) {
-      return DEFAULT_CATEGORIES_DATA;
-    }
-  });
+          await db.putAll(STORES.DIARIES, parsedDiaries);
+          setDiaries(parsedDiaries);
+          
+          // Migrate Categories
+          const lsCategories = localStorage.getItem('chatdairy-categories');
+          let parsedCategories = [];
+          try {
+             parsedCategories = JSON.parse(lsCategories) || [];
+             // Apply old migration logic if needed
+             if (parsedCategories.length > 0 && typeof parsedCategories[0] === 'string') {
+                 parsedCategories = parsedCategories.map(name => ({ id: name, name, color: 'bg-indigo-100 text-indigo-600', iconName: 'Layers' }));
+             }
+             
+             // Ensure defaults
+             const hasDefaults = parsedCategories.some(c => c.name === 'Daily Life');
+             if (!hasDefaults) {
+                 parsedCategories = [...DEFAULT_CATEGORIES_DATA, ...parsedCategories];
+             }
+          } catch {
+             parsedCategories = DEFAULT_CATEGORIES_DATA;
+          }
+          
+          await db.putAll(STORES.CATEGORIES, parsedCategories);
+          setCustomCategories(parsedCategories);
+          
+          // Mark migration done
+          localStorage.removeItem('chatdairy-entries'); 
+          localStorage.removeItem('chatdairy-categories');
+          console.log("Migration completed and LocalStorage cleaned.");
+          
+        } else if (hasDBData) {
+          // Load existing DB data
+          setDiaries(storedDiaries);
+          setCustomCategories(storedCategories);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('chatdairy-entries', JSON.stringify(diaries));
-    } catch (error) {
-      console.error("Failed to save diaries to localStorage:", error);
-      if (error.name === 'QuotaExceededError') {
-        alert("Storage is full! Failed to save diary. Please clear some data.");
+          // Cleanup legacy LocalStorage if it exists (post-migration cleanup for existing users)
+          if (localStorage.getItem('chatdairy-entries')) {
+             localStorage.removeItem('chatdairy-entries');
+             console.log("Cleaned up legacy chatdairy-entries from LocalStorage");
+          }
+          if (localStorage.getItem('chatdairy-categories')) {
+             localStorage.removeItem('chatdairy-categories');
+             console.log("Cleaned up legacy chatdairy-categories from LocalStorage");
+          }
+        } else {
+          // New User: Initialize with Mocks/Defaults
+          setDiaries(MOCK_DIARIES);
+          setCustomCategories(DEFAULT_CATEGORIES_DATA);
+          await db.putAll(STORES.DIARIES, MOCK_DIARIES);
+          await db.putAll(STORES.CATEGORIES, DEFAULT_CATEGORIES_DATA);
+        }
+      } catch (error) {
+        console.error("Failed to initialize database:", error);
+        // Fallback to Mocks if everything fails
+        setDiaries(MOCK_DIARIES);
+        setCustomCategories(DEFAULT_CATEGORIES_DATA);
+      } finally {
+        setIsInitialized(true);
       }
-    }
-  }, [diaries]);
+    };
+    
+    init();
+  }, []);
 
+  // Persist Diaries to DB on change
   useEffect(() => {
-    try {
-      localStorage.setItem('chatdairy-categories', JSON.stringify(customCategories));
-    } catch (error) {
-      console.error("Failed to save categories to localStorage:", error);
-      if (error.name === 'QuotaExceededError') {
-        alert("Storage is full! Failed to save category cover. Please delete some old data.");
+    if (!isInitialized) return;
+    const saveDiaries = async () => {
+      try {
+        // Optimization: In a real app, we should only save the changed item.
+        // For now, to keep sync simple with state, we re-save all (or use put for specific items in add/update functions)
+        // But `diaries` state is the source of truth for UI.
+        // Let's rely on addDiary/updateDiary to update DB, but for safety (e.g. state drift), we can sync.
+        // ACTUALLY: Writing all diaries every time is expensive in IDB if huge.
+        // Better pattern: Update DB inside addDiary/updateDiary functions, and only use this effect for maybe backup?
+        // Let's keep it simple for now but use putAll efficiently.
+        // NOTE: To avoid blocking UI, we don't await this inside the effect strictly.
+        await db.putAll(STORES.DIARIES, diaries);
+      } catch (error) {
+        console.error("Failed to save diaries to DB:", error);
       }
-    }
-  }, [customCategories]);
+    };
+    saveDiaries();
+  }, [diaries, isInitialized]);
+
+  // Persist Categories to DB on change
+  useEffect(() => {
+    if (!isInitialized) return;
+    const saveCategories = async () => {
+      try {
+        await db.putAll(STORES.CATEGORIES, customCategories);
+      } catch (error) {
+        console.error("Failed to save categories to DB:", error);
+      }
+    };
+    saveCategories();
+  }, [customCategories, isInitialized]);
 
   const addCategory = (categoryData) => {
     // Handle both old signature (name, color) and new object signature

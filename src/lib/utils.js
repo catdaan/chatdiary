@@ -17,13 +17,19 @@ export function compressImage(file, maxWidth = 800, quality = 0.7) {
         let width = img.width;
         let height = img.height;
 
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
+        if (width > maxWidth || height > maxWidth) {
+          if (width > height) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+          } else {
+              width = Math.round((width * maxWidth) / height);
+              height = maxWidth;
+          }
         }
 
-        // Additional Safety: Limit canvas dimension to avoid iOS canvas memory limit (max 16MP usually safe, but let's be conservative ~4MP)
-        const MAX_CANVAS_PIXELS = 4096 * 4096; // 16MP
+        // Additional Safety: Limit canvas dimension to avoid iOS canvas memory limit
+        // 4MP is plenty for chat images (approx 2000x2000)
+        const MAX_CANVAS_PIXELS = 2048 * 2048; // 4MP
         if (width * height > MAX_CANVAS_PIXELS) {
              // Force scale down if still too big
              const ratio = Math.sqrt(MAX_CANVAS_PIXELS / (width * height));
@@ -36,8 +42,17 @@ export function compressImage(file, maxWidth = 800, quality = 0.7) {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
         
-        // Compress
-        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        // Compress with slightly lower quality to ensure small size
+        let qualityToUse = quality;
+        let dataUrl = canvas.toDataURL('image/jpeg', qualityToUse);
+        
+        // Aggressive compression if still too large (> 500KB)
+        // Base64 500KB ~= 375KB binary
+        while (dataUrl.length > 700000 && qualityToUse > 0.1) {
+            qualityToUse -= 0.1;
+            dataUrl = canvas.toDataURL('image/jpeg', qualityToUse);
+        }
+        
         resolve(dataUrl);
       };
       img.onerror = (error) => {
@@ -47,12 +62,12 @@ export function compressImage(file, maxWidth = 800, quality = 0.7) {
         console.warn("Image compression failed (format might not be supported by browser Canvas), checking file size...", error);
         
         // Safety check: Prevent memory crash with huge files
-        // 5MB limit for uncompressed fallback (Base64 string length ~ 1.33 * file size)
-        // 5MB file ~= 6.7MB string. Let's set limit to ~7MB string length.
-        const MAX_FALLBACK_SIZE = 7 * 1024 * 1024; 
+        // 2MB limit for uncompressed fallback (Base64 string length ~ 1.33 * file size)
+        // 2MB file ~= 2.7MB string.
+        const MAX_FALLBACK_SIZE = 3 * 1024 * 1024; 
         
         if (event.target.result.length > MAX_FALLBACK_SIZE) {
-            reject(new Error("Image is too large and cannot be compressed. Please upload a smaller image (under 5MB)."));
+            reject(new Error("Image is too large and cannot be compressed. Please upload a smaller image (under 2MB)."));
         } else {
             resolve(event.target.result); 
         }

@@ -10,6 +10,8 @@ export default function ChatSidebar() {
   const { messages, isTyping, sendMessage, triggerAIResponse, currentPersona } = useAI();
   const [inputValue, setInputValue] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [activeMessageId, setActiveMessageId] = useState(null);
+  const isSelectionMode = false; // Placeholder for future feature
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
 
@@ -55,13 +57,33 @@ export default function ChatSidebar() {
               msg.sender === 'user' ? "justify-end" : "justify-start"
             )}
           >
-            <div className={cn(
-              "max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm",
-              msg.sender === 'user' 
-                ? "bg-cream-900 text-white rounded-tr-none" 
-                : "bg-white text-cream-900 border border-cream-100 rounded-tl-none"
-            )}>
-              {msg.text}
+            <div 
+              onClick={() => !isSelectionMode && setActiveMessageId(activeMessageId === msg.id ? null : msg.id)}
+              className={cn(
+                "max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm relative transition-all cursor-pointer",
+                msg.sender === 'user' 
+                  ? "bg-cream-900 text-white rounded-tr-none" 
+                  : "bg-white text-cream-900 border border-cream-100 rounded-tl-none"
+              )}>
+              {msg.attachment && msg.attachment.type === 'image' && (
+                <div className="mb-2 rounded-lg overflow-hidden relative min-h-[100px] bg-gray-50 flex items-center justify-center">
+                  <img 
+                    src={msg.attachment.url} 
+                    alt="Uploaded" 
+                    className="max-w-full h-auto max-h-[200px] object-cover"
+                    onError={(e) => {
+                        console.error("Image rendering failed:", e);
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                  <div className="hidden absolute inset-0 flex-col items-center justify-center text-cream-400 p-4 text-center">
+                      <Sparkles size={24} className="mb-2 opacity-50" />
+                      <span className="text-xs">Image Error</span>
+                  </div>
+                </div>
+              )}
+              {msg.text && <div className="whitespace-pre-wrap">{msg.text}</div>}
             </div>
           </div>
         ))}

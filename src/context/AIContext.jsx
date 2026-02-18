@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUser } from './UserContext';
 import { useDiary } from './DiaryContext';
+import { db, STORES } from '../lib/db';
 
 const AIContext = createContext();
 
@@ -13,8 +14,9 @@ Your task is to write a personal diary entry from the USER's perspective based o
 1. **First Person Only**: Write as "I". Never mention "User" or "AI".
 2. **Authentic Voice**: Use the user's likely tone based on their chat style. Be emotional, raw, and personal.
 3. **No AI Traces**: Do NOT include any "Analysis", "Summary", or "Observation" sections. Do not sound robotic.
-4. **No Embellishments**: Stick strictly to the events and feelings mentioned in the chat.
-5. **Structure**: Title, then the Body.
+4. **No Mentions of AI**: Do NOT mention "AI", "Assistant", "Bot", "Chatbot", or the AI's persona name. Treat the conversation as an internal monologue or just thoughts.
+5. **No Embellishments**: Stick strictly to the events and feelings mentioned in the chat.
+6. **Structure**: Title, then the Body.
 
 # AI BRIEFING (FOR FUTURE MEMORY):
 You must also generate a "Briefing" for the future AI to understand today's context.
@@ -159,7 +161,11 @@ export const AIProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem('ai_diary_settings', JSON.stringify(diarySettings));
+    try {
+      localStorage.setItem('ai_diary_settings', JSON.stringify(diarySettings));
+    } catch (e) {
+      console.warn('Failed to save ai_diary_settings to localStorage:', e);
+    }
   }, [diarySettings]);
 
   // Migration: Reset old default styles to new 'Default'
@@ -175,6 +181,53 @@ export const AIProvider = ({ children }) => {
     }
   }, []);
 
+  // Global Chat Storage Migration (One-time run on mount)
+  useEffect(() => {
+    const migrateAllChatStorage = async () => {
+        try {
+            const keys = Object.keys(localStorage);
+            const chatKeys = keys.filter(k => k.startsWith('chat_messages_'));
+            
+            if (chatKeys.length === 0) return;
+
+            console.log(`[Migration] Found ${chatKeys.length} chat history keys in LocalStorage. Starting migration to IndexedDB...`);
+
+            for (const key of chatKeys) {
+                try {
+                    const date = key.replace('chat_messages_', '');
+                    // Basic validation for date format YYYY-MM-DD
+                    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+
+                    const rawData = localStorage.getItem(key);
+                    if (!rawData) continue;
+
+                    const messages = JSON.parse(rawData);
+                    
+                    // Check if DB already has data for this date (don't overwrite unless necessary, or merge?)
+                    // Strategy: If DB has data, we assume it's newer or migrated. If not, we migrate.
+                    const existing = await db.get(STORES.CHATS, date);
+                    if (!existing) {
+                        await db.put(STORES.CHATS, { date, messages });
+                        console.log(`[Migration] Migrated chat for ${date}`);
+                    } else {
+                        console.log(`[Migration] Skipped ${date} (already in DB)`);
+                    }
+
+                    // Remove from LocalStorage after successful migration or if already exists
+                    localStorage.removeItem(key);
+                } catch (e) {
+                    console.error(`[Migration] Failed to migrate key ${key}:`, e);
+                }
+            }
+            console.log("[Migration] Chat storage migration completed.");
+        } catch (e) {
+            console.error("[Migration] Global migration failed:", e);
+        }
+    };
+
+    migrateAllChatStorage();
+  }, []);
+
   // Date Locking State
   const [activeDate, setActiveDate] = useState(() => {
     const now = new Date();
@@ -188,68 +241,92 @@ export const AIProvider = ({ children }) => {
 
   // Load messages when activeDate changes
   useEffect(() => {
-    setIsChatLoaded(false); // Reset load state on date change
-    setLoadedDate(null); // Reset loaded date
-    
-    const key = `chat_messages_${activeDate}`;
-    const saved = localStorage.getItem(key);
-    
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // Update default greeting if it exists
-      if (parsed.length > 0 && parsed[0].id === 1 && parsed[0].sender === 'ai') {
-        parsed[0].text = t('write.greeting_initial');
-      }
-      setMessages(parsed);
-    } else {
-      // If it's today and we have legacy data, migrate it
-      // Use Local Time for consistency with activeDate
-      const now = new Date();
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      
-      if (activeDate === todayStr) {
-        const legacy = localStorage.getItem('ai_chat_history');
-        if (legacy) {
-          try {
-            const legacyMsgs = JSON.parse(legacy);
-            
-            // Validate if legacy messages are actually from today to prevent pollution from previous days
-            let isFromToday = false;
-            if (legacyMsgs.length > 0) {
-                 const lastMsg = legacyMsgs[legacyMsgs.length - 1];
-                 // If user chatted, id will be timestamp. If only greeting (id=1), treat as fresh start.
-                 if (lastMsg.id !== 1) {
-                     const lastMsgDate = new Date(lastMsg.id);
-                     if (!isNaN(lastMsgDate.getTime())) {
-                         const lastMsgDateStr = `${lastMsgDate.getFullYear()}-${String(lastMsgDate.getMonth() + 1).padStart(2, '0')}-${String(lastMsgDate.getDate()).padStart(2, '0')}`;
-                         if (lastMsgDateStr === todayStr) {
-                             isFromToday = true;
-                         }
-                     }
-                 }
-            }
-            
-            if (isFromToday) {
-                 setMessages(legacyMsgs);
-            } else {
-                 // Legacy data is from a past date, so start fresh for today
-                 setMessages([{ id: 1, sender: 'ai', text: t('write.greeting_initial') }]);
-            }
-            
-            // Don't delete legacy yet, just in case
-          } catch (e) {
-            setMessages([{ id: 1, sender: 'ai', text: t('write.greeting_initial') }]);
-          }
+    const loadMessages = async () => {
+      setIsChatLoaded(false); // Reset load state on date change
+      setLoadedDate(null); // Reset loaded date
+
+      try {
+        // 1. Try IndexedDB first
+        const dbData = await db.get(STORES.CHATS, activeDate);
+
+        if (dbData && dbData.messages) {
+          setMessages(dbData.messages);
         } else {
-          setMessages([{ id: 1, sender: 'ai', text: t('write.greeting_initial') }]);
+          // 2. Fallback to LocalStorage (Migration)
+          const key = `chat_messages_${activeDate}`;
+          const saved = localStorage.getItem(key);
+
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            // Update default greeting if it exists
+            if (parsed.length > 0 && parsed[0].id === 1 && parsed[0].sender === 'ai') {
+              parsed[0].text = t('write.greeting_initial');
+            }
+            setMessages(parsed);
+
+            // Migrate to DB immediately to avoid future LS reads
+            await db.put(STORES.CHATS, { date: activeDate, messages: parsed });
+            // Remove from LS to free space
+            localStorage.removeItem(key);
+          } else {
+            // 3. Check legacy "today" key
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+            if (activeDate === todayStr) {
+              const legacy = localStorage.getItem('ai_chat_history');
+              if (legacy) {
+                try {
+                  const legacyMsgs = JSON.parse(legacy);
+
+                  // Validate if legacy messages are actually from today to prevent pollution from previous days
+                  let isFromToday = false;
+                  if (legacyMsgs.length > 0) {
+                    const lastMsg = legacyMsgs[legacyMsgs.length - 1];
+                    // If user chatted, id will be timestamp. If only greeting (id=1), treat as fresh start.
+                    if (lastMsg.id !== 1) {
+                      const lastMsgDate = new Date(lastMsg.id);
+                      if (!isNaN(lastMsgDate.getTime())) {
+                        const lastMsgDateStr = `${lastMsgDate.getFullYear()}-${String(lastMsgDate.getMonth() + 1).padStart(2, '0')}-${String(lastMsgDate.getDate()).padStart(2, '0')}`;
+                        if (lastMsgDateStr === todayStr) {
+                          isFromToday = true;
+                        }
+                      }
+                    }
+                  }
+
+                  if (isFromToday) {
+                    setMessages(legacyMsgs);
+                    // Save to DB
+                    await db.put(STORES.CHATS, { date: activeDate, messages: legacyMsgs });
+                    // Remove legacy key
+                    localStorage.removeItem('ai_chat_history');
+                  } else {
+                    // Legacy data is from a past date, so start fresh for today
+                    setMessages([{ id: 1, sender: 'ai', text: t('write.greeting_initial') }]);
+                  }
+                } catch (e) {
+                  setMessages([{ id: 1, sender: 'ai', text: t('write.greeting_initial') }]);
+                }
+              } else {
+                setMessages([{ id: 1, sender: 'ai', text: t('write.greeting_initial') }]);
+              }
+            } else {
+              // New day, empty chat
+              setMessages([{ id: 1, sender: 'ai', text: t('write.greeting_initial') }]);
+            }
+          }
         }
-      } else {
-        // New day, empty chat
+      } catch (e) {
+        console.error("Failed to load chats:", e);
         setMessages([{ id: 1, sender: 'ai', text: t('write.greeting_initial') }]);
+      } finally {
+        setIsChatLoaded(true); // Mark as loaded
+        setLoadedDate(activeDate); // Mark this date as loaded
       }
-    }
-    setIsChatLoaded(true); // Mark as loaded
-    setLoadedDate(activeDate); // Mark this date as loaded
+    };
+
+    loadMessages();
   }, [activeDate, t]);
 
   const [isTyping, setIsTyping] = useState(false);
@@ -297,35 +374,61 @@ export const AIProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    // Save to date-specific key ONLY if loaded AND the loaded messages belong to the active date
-    // This prevents race conditions where activeDate changes but messages are still from previous date
-    if (activeDate && isChatLoaded && loadedDate === activeDate) {
-      localStorage.setItem(`chat_messages_${activeDate}`, JSON.stringify(messages));
-      
-      // Also update legacy key if it's today, for backward compatibility or safety
-      const now = new Date();
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      
-      if (activeDate === todayStr) {
-        localStorage.setItem('ai_chat_history', JSON.stringify(messages));
+    const saveMessages = async () => {
+      // Save to date-specific key ONLY if loaded AND the loaded messages belong to the active date
+      // This prevents race conditions where activeDate changes but messages are still from previous date
+      if (activeDate && isChatLoaded && loadedDate === activeDate) {
+        try {
+          await db.put(STORES.CHATS, { date: activeDate, messages });
+          
+          // Remove from LocalStorage to free up space (CRITICAL for fixing "QuotaExceededError")
+          localStorage.removeItem(`chat_messages_${activeDate}`);
+          
+          // Also update legacy key if it's today, for backward compatibility or safety
+          const now = new Date();
+          const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+          
+          if (activeDate === todayStr) {
+            localStorage.removeItem('ai_chat_history');
+          }
+        } catch (e) {
+          console.warn('Failed to save chat messages to DB:', e);
+        }
       }
-    }
+    };
+    saveMessages();
   }, [messages, activeDate, isChatLoaded, loadedDate]);
 
   useEffect(() => {
-    localStorage.setItem('ai_personas', JSON.stringify(personas));
+    try {
+      localStorage.setItem('ai_personas', JSON.stringify(personas));
+    } catch (e) {
+      console.warn('Failed to save ai_personas to localStorage:', e);
+    }
   }, [personas]);
 
   useEffect(() => {
-    localStorage.setItem('ai_current_persona_id', currentPersonaId);
+    try {
+      localStorage.setItem('ai_current_persona_id', currentPersonaId);
+    } catch (e) {
+      console.warn('Failed to save ai_current_persona_id to localStorage:', e);
+    }
   }, [currentPersonaId]);
 
   useEffect(() => {
-    localStorage.setItem('ai_api_configs', JSON.stringify(apiConfigs));
+    try {
+      localStorage.setItem('ai_api_configs', JSON.stringify(apiConfigs));
+    } catch (e) {
+      console.warn('Failed to save ai_api_configs to localStorage:', e);
+    }
   }, [apiConfigs]);
 
   useEffect(() => {
-    localStorage.setItem('ai_current_api_config_id', currentApiConfigId);
+    try {
+      localStorage.setItem('ai_current_api_config_id', currentApiConfigId);
+    } catch (e) {
+      console.warn('Failed to save ai_current_api_config_id to localStorage:', e);
+    }
   }, [currentApiConfigId]);
 
   const currentPersona = personas.find(p => p.id === currentPersonaId) || personas[0];
@@ -523,9 +626,9 @@ export const AIProvider = ({ children }) => {
             } else if (item.type === 'image_url') {
               // Parse Data URL: data:image/jpeg;base64,....
               try {
-                // Check if url is defined before matching
-                if (!item.image_url || !item.image_url.url) {
-                    console.warn("Skipping image with no URL:", item);
+                // Check if url is defined and is a string before matching
+                if (!item.image_url || !item.image_url.url || typeof item.image_url.url !== 'string') {
+                    console.warn("Skipping image with invalid URL:", item);
                     return;
                 }
 
@@ -792,66 +895,67 @@ ${targetDateChatLogs}
     }
   };
 
-  // Real AI Chat Response
-  const generateChatResponse = async (history) => {
-    try {
-      const config = currentApiConfig;
-      const persona = currentPersona;
-      
-      // Use activeDate for context
-      const [year, month, day] = activeDate.split('-').map(Number);
-      const dateObj = new Date(year, month - 1, day);
-      const dateString = dateObj.toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-      
-      // Fetch Recent Diary Summaries (Before activeDate)
-      const recentSummaries = diaries
-        .filter(d => new Date(d.date) < new Date(activeDate))
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 7)
-        .map(d => {
-            if (d.ai_briefing) {
-                return `### [${d.date}] Briefing
-- Events: ${d.ai_briefing.events}
-- Atmosphere/Emotion: ${d.ai_briefing.atmosphere_or_emotion}
-${d.ai_briefing.unfinished_topics ? `- Unfinished Topics: ${d.ai_briefing.unfinished_topics}` : ''}`;
-            }
-            return `- [${d.date}] ${d.title}: ${d.summary || d.content.substring(0, 50)}...`;
-        })
-        .join('\n\n');
-
-      // PREPARE HISTORY: Include yesterday's last 20 messages for continuity
-      let combinedHistory = [...history];
+    // Real AI Chat Response
+    const generateChatResponse = async (history) => {
       try {
-          const prevDate = new Date(year, month - 1, day - 1);
-          const prevY = prevDate.getFullYear();
-          const prevM = String(prevDate.getMonth() + 1).padStart(2, '0');
-          const prevD = String(prevDate.getDate()).padStart(2, '0');
-          const prevDateStr = `${prevY}-${prevM}-${prevD}`;
-          
-          const prevChatKey = `chat_messages_${prevDateStr}`;
-          const prevChatSaved = localStorage.getItem(prevChatKey);
-          
-          if (prevChatSaved) {
-              const prevChat = JSON.parse(prevChatSaved);
-              if (Array.isArray(prevChat) && prevChat.length > 0) {
-                  // Take last 20 messages from yesterday
-                  const recentPrevChat = prevChat.slice(-20).map(msg => ({
-                      ...msg,
-                      // Optional: Add a marker or modify text to indicate date? 
-                      // For now, raw injection is usually fine as long as order is correct.
-                      // But maybe adding a system separator or just letting them flow is better.
-                      // Let's just let them flow, but maybe we should ensure they don't look like *today's* messages?
-                      // The API doesn't see timestamps usually unless we put them in.
-                      // We can assume the LLM understands flow.
-                  }));
-                  
-                  // Prepend to history
-                  combinedHistory = [...recentPrevChat, ...history];
-                  
-                  // Log for debugging
-                  console.log(`[AIContext] Injected ${recentPrevChat.length} messages from ${prevDateStr}`);
+        const config = currentApiConfig;
+        const persona = currentPersona;
+        
+        // Use activeDate for context
+        const [year, month, day] = activeDate.split('-').map(Number);
+        const dateObj = new Date(year, month - 1, day);
+        const dateString = dateObj.toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        
+        // Fetch Recent Diary Summaries (Before activeDate)
+        const recentSummaries = diaries
+          .filter(d => new Date(d.date) < new Date(activeDate))
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
+          .slice(0, 7)
+          .map(d => {
+              if (d.ai_briefing) {
+                  return `### [${d.date}] Briefing
+  - Events: ${d.ai_briefing.events}
+  - Atmosphere/Emotion: ${d.ai_briefing.atmosphere_or_emotion}
+  ${d.ai_briefing.unfinished_topics ? `- Unfinished Topics: ${d.ai_briefing.unfinished_topics}` : ''}`;
               }
-          }
+              return `- [${d.date}] ${d.title}: ${d.summary || d.content.substring(0, 50)}...`;
+          })
+          .join('\n\n');
+  
+        // PREPARE HISTORY: Include yesterday's last 20 messages for continuity
+        let combinedHistory = [...history];
+        try {
+            const prevDate = new Date(year, month - 1, day - 1);
+            const prevY = prevDate.getFullYear();
+            const prevM = String(prevDate.getMonth() + 1).padStart(2, '0');
+            const prevD = String(prevDate.getDate()).padStart(2, '0');
+            const prevDateStr = `${prevY}-${prevM}-${prevD}`;
+            
+            // Try DB first, then LS as fallback (though LS should be empty if migrated)
+            let prevChatMessages = [];
+            const dbData = await db.get(STORES.CHATS, prevDateStr);
+            if (dbData && dbData.messages) {
+                prevChatMessages = dbData.messages;
+            } else {
+                const prevChatKey = `chat_messages_${prevDateStr}`;
+                const prevChatSaved = localStorage.getItem(prevChatKey);
+                if (prevChatSaved) {
+                    prevChatMessages = JSON.parse(prevChatSaved);
+                }
+            }
+            
+            if (Array.isArray(prevChatMessages) && prevChatMessages.length > 0) {
+                // Take last 20 messages from yesterday
+                const recentPrevChat = prevChatMessages.slice(-20).map(msg => ({
+                    ...msg,
+                }));
+                
+                // Prepend to history
+                combinedHistory = [...recentPrevChat, ...history];
+                
+                // Log for debugging
+                console.log(`[AIContext] Injected ${recentPrevChat.length} messages from ${prevDateStr}`);
+            }
       } catch (e) {
           console.error("Failed to load previous day history:", e);
       }
@@ -1040,7 +1144,12 @@ ${persona.customPrompt || "No custom settings."}
       
       # PERSONA CONTEXT
       The AI persona you are roleplaying as is named: "${currentPersona.name}".
+      
+      ${diarySettings.withAiTrace ? `
       If the user's diary entry mentions talking to you, refer to yourself by this name ("${currentPersona.name}") or as a friend/companion, but NEVER as "The AI".
+      ` : `
+      You must NOT mention yourself or the conversation with the AI in the diary entry content. The diary should focus purely on the user's life events and feelings as if they were writing it alone.
+      `}
 
       # LENGTH CONSTRAINT
       The user has requested a diary length of approximately ${diarySettings.wordCount} words (or characters for CJK languages). 
@@ -1050,6 +1159,7 @@ ${persona.customPrompt || "No custom settings."}
       1. You must ALWAYS maintain the "First Person" ('I') perspective and the "Ghostwriter" role (never reveal you are AI).
       2. You must ALWAYS stick to the actual events in the chat (no hallucinations).
       3. ONLY override the *tone* or *formatting* rules (like emojis, sentence length) if the user's custom style above explicitly demands it. Otherwise, the "Ghostwriter" rules (No AI traces, authentic voice) remain absolute.
+      ${diarySettings.withAiTrace ? '' : '4. STRICTLY PROHIBITED: Do not mention the AI, the assistant, the chat, or the persona name. Write as if these thoughts are purely internal.'}
 
       Target Diary Date: ${targetDateFormatted}
 
@@ -1130,8 +1240,17 @@ ${d.ai_briefing.unfinished_topics ? `- Unfinished Topics: ${d.ai_briefing.unfini
         .join('\n\n');
 
       // Get chat history for that specific diary date (Past Context)
+      let fullDayChat = [];
       const chatKey = `chat_messages_${diary.date}`;
-      const fullDayChat = JSON.parse(localStorage.getItem(chatKey) || '[]');
+      
+      // Try DB first
+      const dbData = await db.get(STORES.CHATS, diary.date);
+      if (dbData && dbData.messages) {
+          fullDayChat = dbData.messages;
+      } else {
+          // Fallback to LS
+          fullDayChat = JSON.parse(localStorage.getItem(chatKey) || '[]');
+      }
       
       let diaryTimestamp = Infinity;
       if (typeof diary.id === 'number') {
@@ -1230,12 +1349,28 @@ STRICT LIMIT: 30 characters maximum.
   };
 
   const sendMessage = async (text, attachment = null) => {
-    if (!text.trim() && !attachment) return;
+    // Validate inputs
+    const safeText = typeof text === 'string' ? text : '';
+    if (!safeText.trim() && !attachment) return;
+    
+    // Validate attachment
+    if (attachment) {
+        if (!attachment.type || !attachment.url || typeof attachment.url !== 'string') {
+            console.error("Invalid attachment format:", attachment);
+            return;
+        }
+        // Extra safety check: If image is somehow still huge (> 2MB base64), reject it to prevent crash
+        if (attachment.url.length > 3 * 1024 * 1024) {
+             console.error("Image too large to send:", attachment.url.length);
+             alert("Image is too large to send. Please try a smaller image.");
+             return;
+        }
+    }
     
     const userMsg = { 
         id: Date.now(), 
         sender: 'user', 
-        text,
+        text: safeText,
         attachment 
     };
     setMessages(prev => [...prev, userMsg]);

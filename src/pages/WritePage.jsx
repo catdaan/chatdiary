@@ -1,3 +1,4 @@
+import { db, STORES } from '../lib/db';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -162,20 +163,46 @@ export default function WritePage() {
   useEffect(() => {
     if (!activeDate) return;
     const draftKey = `diary_draft_${activeDate}`;
-    
-    try {
-        const savedDraft = localStorage.getItem(draftKey);
-        if (savedDraft) {
-            const parsed = JSON.parse(savedDraft);
-            setManualContent(parsed.content || '');
-            setManualTitle(parsed.title || '');
-            setManualMood(parsed.mood || 'neutral');
-            setManualTags(parsed.tags || []);
-            setManualCategory(parsed.category || '');
-            setAssistantMessages(parsed.messages || []);
-            setIsAssistantOpen(parsed.isAssistantOpen || false);
-        } else {
-            // No draft found for this date, reset to defaults
+
+    const loadDraft = async () => {
+        try {
+            // Check IndexedDB first
+            let parsed = await db.get(STORES.SETTINGS, draftKey);
+            
+            // Fallback to LocalStorage (migration path)
+            if (!parsed) {
+                const lsDraft = localStorage.getItem(draftKey);
+                if (lsDraft) {
+                    try {
+                        parsed = JSON.parse(lsDraft);
+                        // Migration will happen on next save
+                    } catch (e) {
+                        console.warn("Invalid JSON in LS draft");
+                    }
+                }
+            }
+
+            if (parsed) {
+                setManualContent(parsed.content || '');
+                setManualTitle(parsed.title || '');
+                setManualMood(parsed.mood || 'neutral');
+                setManualTags(parsed.tags || []);
+                setManualCategory(parsed.category || '');
+                setAssistantMessages(parsed.messages || []);
+                setIsAssistantOpen(parsed.isAssistantOpen || false);
+            } else {
+                // No draft found for this date, reset to defaults
+                setManualContent('');
+                setManualTitle('');
+                setManualMood('neutral');
+                setManualTags([]);
+                setManualCategory('');
+                setAssistantMessages([]);
+                setIsAssistantOpen(false);
+            }
+        } catch (e) {
+            console.error("Failed to load draft", e);
+            // On error, also reset to avoid stale state
             setManualContent('');
             setManualTitle('');
             setManualMood('neutral');
@@ -184,17 +211,9 @@ export default function WritePage() {
             setAssistantMessages([]);
             setIsAssistantOpen(false);
         }
-    } catch (e) {
-        console.error("Failed to load draft", e);
-        // On error, also reset to avoid stale state
-        setManualContent('');
-        setManualTitle('');
-        setManualMood('neutral');
-        setManualTags([]);
-        setManualCategory('');
-        setAssistantMessages([]);
-        setIsAssistantOpen(false);
-    }
+    };
+
+    loadDraft();
   }, [activeDate]);
 
   // Close AI Assistant when switching to Chat Mode
@@ -207,10 +226,6 @@ export default function WritePage() {
   useEffect(() => {
     if (!activeDate) return;
     const draftKey = `diary_draft_${activeDate}`;
-
-    // Only save if there's actual content or changes to avoid overwriting with empty state on initial load
-    // But we need to be careful not to prevent clearing.
-    // A simple debounce could be good, but standard effect is fine for local storage.
     
     // Don't auto-save if we are currently saving the diary (prevent overwriting draft with partial state)
     if (isSaving) return;
@@ -226,8 +241,21 @@ export default function WritePage() {
         timestamp: Date.now()
     };
 
-    localStorage.setItem(draftKey, JSON.stringify(draftData));
-  }, [manualContent, manualTitle, manualMood, manualTags, manualCategory, assistantMessages, isAssistantOpen, isSaving]); // activeDate excluded to prevent saving old content to new date during switch
+    const saveDraft = async () => {
+        try {
+            await db.put(STORES.SETTINGS, draftData, draftKey);
+            // Clean up localStorage version if exists to free up space
+            localStorage.removeItem(draftKey);
+        } catch (e) {
+            console.warn('Failed to save draft to IndexedDB:', e);
+        }
+    };
+
+    // Debounce slightly to avoid too many DB writes
+    const timer = setTimeout(saveDraft, 500);
+    return () => clearTimeout(timer);
+
+  }, [manualContent, manualTitle, manualMood, manualTags, manualCategory, assistantMessages, isAssistantOpen, isSaving, activeDate]);
 
   const handleAssistantPreview = (data) => {
       // data is { content, title, tags }
@@ -278,7 +306,14 @@ export default function WritePage() {
     if (!file) return;
 
     try {
+      console.log("Starting image compression...");
       const compressedDataUrl = await compressImage(file);
+      console.log("Image compressed, length:", compressedDataUrl ? compressedDataUrl.length : "null");
+      
+      if (!compressedDataUrl || typeof compressedDataUrl !== 'string') {
+          throw new Error("Image compression returned invalid data");
+      }
+      
       sendMessage('', { type: 'image', url: compressedDataUrl });
     } catch (error) {
       console.error("Image upload failed:", error);
@@ -799,12 +834,21 @@ export default function WritePage() {
                                 : "bg-white text-cream-900 border border-cream-100 rounded-tl-none" 
                            )}>
                               {msg.attachment && msg.attachment.type === 'image' && (
-                                <div className="mb-2 rounded-lg overflow-hidden">
+                                <div className="mb-2 rounded-lg overflow-hidden relative min-h-[100px] bg-gray-50 flex items-center justify-center">
                                   <img 
                                     src={msg.attachment.url} 
                                     alt="Uploaded" 
-                                    className="max-w-full h-auto max-h-[300px] object-cover" 
+                                    className="max-w-full h-auto max-h-[300px] object-cover"
+                                    onError={(e) => {
+                                        console.error("Image rendering failed:", e);
+                                        e.target.style.display = 'none';
+                                        e.target.nextSibling.style.display = 'flex';
+                                    }}
                                   />
+                                  <div className="hidden absolute inset-0 flex-col items-center justify-center text-cream-400 p-4 text-center">
+                                      <ImageIcon size={24} className="mb-2 opacity-50" />
+                                      <span className="text-xs">{t('write.errors.imageLoadFailed')}</span>
+                                  </div>
                                 </div>
                               )}
                               {msg.text && <div className="whitespace-pre-wrap">{msg.text}</div>}
