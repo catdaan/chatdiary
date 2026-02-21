@@ -641,13 +641,30 @@ export default function WritePage() {
         </div>
 
         {/* Active Date Label - Centered Absolute */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-            <div className="px-3 py-1 bg-cream-100 rounded-lg border border-cream-200 flex items-center gap-2">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+            <label className="px-3 py-1 bg-cream-100 hover:bg-cream-200 transition-colors rounded-lg border border-cream-200 flex items-center gap-2 cursor-pointer relative shadow-sm group select-none">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                <span className="text-xs font-semibold text-cream-700 uppercase tracking-wide">
+                <span className="text-xs font-semibold text-cream-700 uppercase tracking-wide flex items-center gap-1">
                   {t('write.recording')}: {activeDate ? format(parseISO(activeDate), 'PP', { locale: currentLocale }) : format(new Date(), 'PP', { locale: currentLocale })}
+                  <Calendar size={12} className="text-cream-400 group-hover:text-cream-600 transition-colors ml-1" />
                 </span>
-            </div>
+                <input 
+                    type="date" 
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    value={activeDate || format(new Date(), 'yyyy-MM-dd')}
+                    onChange={(e) => {
+                        if(e.target.value) setActiveDate(e.target.value);
+                    }}
+                    max={format(new Date(), 'yyyy-MM-dd')}
+                    onClick={(e) => {
+                         try {
+                            e.target.showPicker();
+                        } catch (err) {
+                            // Fallback
+                        }
+                    }}
+                />
+            </label>
         </div>
         
         <div className="flex items-center gap-3">
