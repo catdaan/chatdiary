@@ -153,7 +153,14 @@ const ApiSettings = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-cream-900 mb-1">{t('settings.api.apiKey')}</label>
+              <label className="block text-sm font-medium text-cream-900 mb-1">
+                {t('settings.api.apiKey')}
+                {editForm.provider === 'google' && (
+                  <span className="ml-2 text-xs font-normal text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                    Free Tier Available
+                  </span>
+                )}
+              </label>
               <input 
                 type="password"
                 value={editForm.apiKey}
@@ -161,6 +168,23 @@ const ApiSettings = () => {
                 className="w-full p-3 bg-cream-50 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cream-300"
                 placeholder="sk-..."
               />
+              <div className="mt-1 text-xs text-cream-500 flex justify-end">
+                {editForm.provider === 'openai' && (
+                  <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="hover:text-cream-900 underline decoration-cream-300 underline-offset-2 transition-colors">
+                    Get OpenAI API Key &rarr;
+                  </a>
+                )}
+                {editForm.provider === 'deepseek' && (
+                  <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer" className="hover:text-cream-900 underline decoration-cream-300 underline-offset-2 transition-colors">
+                    Get DeepSeek API Key &rarr;
+                  </a>
+                )}
+                {editForm.provider === 'google' && (
+                  <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="hover:text-cream-900 underline decoration-cream-300 underline-offset-2 transition-colors">
+                    Get Free Gemini API Key &rarr;
+                  </a>
+                )}
+              </div>
             </div>
 
             <div>

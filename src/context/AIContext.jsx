@@ -123,14 +123,29 @@ export const AIProvider = ({ children }) => {
     try {
       const saved = localStorage.getItem('ai_api_configs');
       const parsed = saved ? JSON.parse(saved) : null;
+      
       const defaults = [
-        { id: 'official', name: 'Official OpenAI', type: 'official', apiKey: '', baseUrl: 'https://api.openai.com/v1', isDefault: true }
+        { id: 'official', name: 'Official OpenAI', type: 'official', apiKey: '', baseUrl: 'https://api.openai.com/v1', isDefault: true, provider: 'openai', model: 'gpt-3.5-turbo' },
+        { id: 'gemini-free', name: 'Google Gemini (Free)', type: 'official', apiKey: '', baseUrl: 'https://generativelanguage.googleapis.com', isDefault: true, provider: 'google', model: 'gemini-1.5-flash' },
+        { id: 'deepseek', name: 'DeepSeek', type: 'official', apiKey: '', baseUrl: 'https://api.deepseek.com', isDefault: true, provider: 'deepseek', model: 'deepseek-chat' }
       ];
-      return Array.isArray(parsed) ? parsed : defaults;
+
+      if (!Array.isArray(parsed)) return defaults;
+
+      // Merge new defaults if they don't exist in parsed (by ID)
+      const merged = [...parsed];
+      defaults.forEach(def => {
+        if (!merged.some(c => c.id === def.id)) {
+          merged.push(def);
+        }
+      });
+      return merged;
     } catch (e) {
       console.error("Failed to parse ai_api_configs:", e);
       return [
-        { id: 'official', name: 'Official OpenAI', type: 'official', apiKey: '', baseUrl: 'https://api.openai.com/v1', isDefault: true }
+        { id: 'official', name: 'Official OpenAI', type: 'official', apiKey: '', baseUrl: 'https://api.openai.com/v1', isDefault: true, provider: 'openai', model: 'gpt-3.5-turbo' },
+        { id: 'gemini-free', name: 'Google Gemini (Free)', type: 'official', apiKey: '', baseUrl: 'https://generativelanguage.googleapis.com', isDefault: true, provider: 'google', model: 'gemini-1.5-flash' },
+        { id: 'deepseek', name: 'DeepSeek', type: 'official', apiKey: '', baseUrl: 'https://api.deepseek.com', isDefault: true, provider: 'deepseek', model: 'deepseek-chat' }
       ];
     }
   });
