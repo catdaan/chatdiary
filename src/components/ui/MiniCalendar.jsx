@@ -60,6 +60,12 @@ export default function MiniCalendar({ selectedDate, onDateSelect }) {
 
   const handleDateClick = (day) => {
     const dateString = format(day, 'yyyy-MM-dd');
+    
+    if (onDateSelect) {
+        onDateSelect(dateString);
+        return;
+    }
+
     const todayString = format(new Date(), 'yyyy-MM-dd');
     
     // 5. Future date: Allow navigation to show "Future" message
@@ -79,6 +85,7 @@ export default function MiniCalendar({ selectedDate, onDateSelect }) {
   };
 
   const handleHeaderClick = () => {
+    if (onDateSelect) return; // Disable navigation in picker mode
     navigate('/calendar'); // Navigate to Timeline view
   };
 

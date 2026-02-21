@@ -24,6 +24,7 @@ import { CategorySelector } from '../components/ui/CategorySelector';
 import { MoodSelector } from '../components/ui/MoodSelector';
 import { DiffViewer } from '../components/ui/DiffViewer';
 import AIPolishAssistant from '../components/chat/AIPolishAssistant';
+import MiniCalendar from '../components/ui/MiniCalendar';
 
 export default function WritePage() {
   const { i18n } = useTranslation();
@@ -77,6 +78,7 @@ export default function WritePage() {
   const navigate = useNavigate();
   const [inputValue, setInputValue] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   
   // Selection Mode State
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -641,30 +643,47 @@ export default function WritePage() {
         </div>
 
         {/* Active Date Label - Centered Absolute */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-            <label className="px-3 py-1 bg-cream-100 hover:bg-cream-200 transition-colors rounded-lg border border-cream-200 flex items-center gap-2 cursor-pointer relative shadow-sm group select-none">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                <span className="text-xs font-semibold text-cream-700 uppercase tracking-wide flex items-center gap-1">
-                  {t('write.recording')}: {activeDate ? format(parseISO(activeDate), 'PP', { locale: currentLocale }) : format(new Date(), 'PP', { locale: currentLocale })}
-                  <Calendar size={12} className="text-cream-400 group-hover:text-cream-600 transition-colors ml-1" />
-                </span>
-                <input 
-                    type="date" 
-                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                    value={activeDate || format(new Date(), 'yyyy-MM-dd')}
-                    onChange={(e) => {
-                        if(e.target.value) setActiveDate(e.target.value);
-                    }}
-                    max={format(new Date(), 'yyyy-MM-dd')}
-                    onClick={(e) => {
-                         try {
-                            e.target.showPicker();
-                        } catch (err) {
-                            // Fallback
-                        }
-                    }}
-                />
-            </label>
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+            <div className="relative">
+                <button 
+                    onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                    className="px-3 py-1 bg-cream-100 hover:bg-cream-200 transition-colors rounded-lg border border-cream-200 flex items-center gap-2 cursor-pointer relative shadow-sm group select-none"
+                >
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    <span className="text-xs font-semibold text-cream-700 uppercase tracking-wide flex items-center gap-1">
+                      {t('write.recording')}: {activeDate ? format(parseISO(activeDate), 'PP', { locale: currentLocale }) : format(new Date(), 'PP', { locale: currentLocale })}
+                      <Calendar size={12} className="text-cream-400 group-hover:text-cream-600 transition-colors ml-1" />
+                    </span>
+                </button>
+                
+                <AnimatePresence>
+                    {isCalendarOpen && (
+                        <>
+                            {/* Backdrop to close */}
+                            <div 
+                                className="fixed inset-0 z-10" 
+                                onClick={() => setIsCalendarOpen(false)}
+                            />
+                            
+                            {/* Calendar Popup */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-20 w-[280px] shadow-xl"
+                            >
+                                <MiniCalendar 
+                                    selectedDate={activeDate}
+                                    onDateSelect={(date) => {
+                                        setActiveDate(date);
+                                        setIsCalendarOpen(false);
+                                    }}
+                                />
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>
+            </div>
         </div>
         
         <div className="flex items-center gap-3">
