@@ -2,10 +2,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Cloud, HardDrive, Download, Upload, Github, Save, RefreshCw, Check, AlertCircle, 
-  Trash2, Database, ChevronDown, ChevronUp, Info, Clock, ArrowDownCircle
+  Trash2, Database, ChevronDown, ChevronUp, Info, Clock, ArrowDownCircle, FileText
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { backupService } from '../../services/backupService';
+import { pdfService } from '../../services/pdfService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation, Trans } from 'react-i18next';
 
@@ -114,6 +115,7 @@ const BackupSettings = () => {
   const [gdriveToken, setGdriveToken] = useState(() => localStorage.getItem('backup_gdrive_token') || '');
   const [isUploadingDrive, setIsUploadingDrive] = useState(false);
   const [driveStatus, setDriveStatus] = useState(null);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   // --- Effects ---
   useEffect(() => {
@@ -139,6 +141,19 @@ const BackupSettings = () => {
     } catch (e) {
       console.error(e);
       alert(t('settings.backup.local.downloadError'));
+    }
+  };
+
+  const handlePdfExport = async () => {
+    setIsExportingPdf(true);
+    try {
+      await pdfService.generateDiaryPDF();
+      alert('PDF Exported Successfully!');
+    } catch (e) {
+      console.error(e);
+      alert('Failed to export PDF: ' + e.message);
+    } finally {
+      setIsExportingPdf(false);
     }
   };
 
@@ -259,6 +274,15 @@ const BackupSettings = () => {
               >
                 <Download size={18} />
                 {t('settings.backup.local.download')}
+              </button>
+
+              <button 
+                onClick={handlePdfExport}
+                disabled={isExportingPdf}
+                className="flex-1 min-w-[160px] py-3 bg-white border border-cream-200 hover:bg-cream-50 text-cream-900 rounded-xl transition-colors font-medium flex items-center justify-center gap-2"
+              >
+                {isExportingPdf ? <RefreshCw className="animate-spin" size={18} /> : <FileText size={18} />}
+                Export PDF
               </button>
 
               <div className="relative flex-1 min-w-[160px]">
